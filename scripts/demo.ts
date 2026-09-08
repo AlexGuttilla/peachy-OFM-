@@ -14,7 +14,7 @@ async function main() {
     db.user.findUniqueOrThrow({ where: { username } });
 
   const [m1, m2, m3, va, mgr] = await Promise.all([
-    u("model1"), u("model2"), u("model3"), u("va1"), u("manager1"),
+    u("chelsea"), u("amelia"), u("brooks"), u("va1"), u("manager1"),
   ]);
 
   // Two models live right now, detected automatically.

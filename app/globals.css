@@ -1,43 +1,61 @@
 @import "tailwindcss";
 
+/*
+ * Brand colours read off the Peachy logo. They are sampled by eye from the
+ * artwork rather than taken from a brand sheet — if there are official hex
+ * values, these are the only lines that need changing.
+ */
 :root {
-  /* Near-white pink ground, orange highlights. */
-  --bg: #fff8f5;
-  --surface: #ffffff;
-  --border: #f7e2d6;
-  --text: #2b1a10;
-  --muted: #8a6a58;
+  --peach: #f79438;
+  --peach-deep: #e4761f;
+  --rust: #c2551d;
+  --halo: #f8c3b4;
+  --leaf: #4c9a4e;
+  --leaf-deep: #2f6b34;
 
-  /* --accent fills shapes; --accent-strong carries text and sits behind it. */
-  --accent: #ea580c;
-  --accent-strong: #c2410c;
-  --accent-soft: #ffedd5;
-  /* Text that sits ON --accent-strong. Flips in dark mode, where white on
-     orange is only 2.8:1. */
+  --bg: #fdefe9;
+  --surface: #ffffff;
+  --border: #f6dace;
+  --text: #3b2113;
+  --muted: #8b6553;
+
+  /* --accent fills shapes. --accent-strong is the one that carries text:
+     the logo's rust darkened until it clears 4.5:1 on both bg and surface. */
+  --accent: var(--peach);
+  --accent-strong: #b84c17;
+  --accent-soft: #fce7d8;
   --on-accent: #ffffff;
 
-  /* Green stays semantic: it means "on air", not brand. */
-  --live: #15803d;
-  --live-soft: #dcfce7;
-  --live-line: #86efac;
+  /* Green stays semantic: it means "on air". Pulled toward the logo's leaf. */
+  --live: #2f6b34;
+  --live-soft: #dff0da;
+  --live-line: #94ca90;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #191008;
-    --surface: #241810;
-    --border: #3b2a1d;
-    --text: #f9efe8;
-    --muted: #b5988a;
+    --peach: #fb923c;
+    --peach-deep: #e4761f;
+    --rust: #f9a04f;
+    --halo: #6b3a2a;
+    --leaf: #6cc06f;
+    --leaf-deep: #3f8a44;
 
-    --accent: #fb923c;
-    --accent-strong: #f97316;
-    --accent-soft: #3a2410;
-    --on-accent: #21140a;
+    --bg: #221409;
+    --surface: #2e1c10;
+    --border: #462d1c;
+    --text: #fbeee6;
+    --muted: #c0a08d;
 
-    --live: #4ade80;
-    --live-soft: #13301d;
-    --live-line: #256b3d;
+    --accent: var(--peach);
+    --accent-strong: #f9a04f;
+    --accent-soft: #3d2410;
+    /* White on orange is only 2.8:1 — text on the accent flips to near-black. */
+    --on-accent: #1c1008;
+
+    --live: #6cc06f;
+    --live-soft: #17301a;
+    --live-line: #2f6b34;
   }
 }
 
@@ -54,7 +72,14 @@
   --color-live: var(--live);
   --color-live-soft: var(--live-soft);
   --color-live-line: var(--live-line);
+  --color-peach: var(--peach);
+  --color-peach-deep: var(--peach-deep);
+  --color-rust: var(--rust);
+  --color-halo: var(--halo);
+  --color-leaf: var(--leaf);
+  --color-leaf-deep: var(--leaf-deep);
   --font-sans: var(--font-geist-sans);
+  --font-brand: var(--font-lobster);
 }
 
 html {

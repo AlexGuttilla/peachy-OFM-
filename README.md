@@ -1,9 +1,18 @@
-# Peachy Ops
+# Peachy
 
 Internal web app for the agency. Mobile-first — open it in your phone browser
 and add it to your home screen. No app store, no download for anyone.
 
-Three screens:
+Opening the app lands on a Peachy welcome screen with a **Next** button, then
+a home screen with the two things people actually came for. The wording
+changes with who is signed in:
+
+| | Owner sees | Creator sees |
+| --- | --- | --- |
+| First button | Creators' Schedules | Mark Your Schedule |
+| Second button | Clocked In Hours | Clock In Hours |
+
+Behind those:
 
 1. **Schedule** — a month calendar. Each model signs in and enters her own
    hours; the owner sees everybody's and can edit anyone's. Shifts that run
@@ -41,6 +50,27 @@ Employees clock in and out with the button on the live board instead.
 Tonight's logged tokens show against each live model on the board. Until
 Chaturbate is connected those hand-entered numbers are the only real ones, so
 they take precedence over the feed's own count.
+
+## Branding
+
+The peach and the "Peachy" wordmark are drawn as SVG in `components/Logo.tsx`
+so they stay sharp at any size and recolour with the theme. They also supply
+the browser tab icon (`app/icon.svg`), the iOS home-screen icon
+(`app/apple-icon.tsx`) and the PWA manifest (`app/manifest.ts`).
+
+Brand colours are sampled by eye from the logo artwork and live at the top of
+`app/globals.css`. If there are official hex values, those few lines are the
+only place to change them. One note on the orange: `--accent` fills shapes,
+while `--accent-strong` is the darker rust that sits behind any text, because
+the logo orange only reaches 2.3:1 against white. Every text pairing in the
+app clears 4.5:1 in both light and dark mode.
+
+## Roster
+
+Creators go by first name throughout: **Chelsea**, **Amelia**, **Brooks** and
+**Tessa**, plus employee accounts for the VAs and stream managers. Edit
+`prisma/seed.ts` and re-run `npm run seed` to add the remaining creators or
+change anyone's colour.
 
 ## Setup
 

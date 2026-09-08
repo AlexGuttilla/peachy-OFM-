@@ -13,18 +13,17 @@ const ROSTER: Array<{
   color: string;
   chaturbateUsername?: string;
 }> = [
-  { username: "owner", displayName: "Owner", role: "OWNER", color: "#0f172a" },
+  { username: "owner", displayName: "Owner", role: "OWNER", color: "#3b2113" },
 
-  { username: "model1", displayName: "Model 1", role: "MODEL", color: "#f472b6", chaturbateUsername: "model1" },
-  { username: "model2", displayName: "Model 2", role: "MODEL", color: "#a78bfa", chaturbateUsername: "model2" },
-  { username: "model3", displayName: "Model 3", role: "MODEL", color: "#38bdf8", chaturbateUsername: "model3" },
-  { username: "model4", displayName: "Model 4", role: "MODEL", color: "#34d399", chaturbateUsername: "model4" },
-  { username: "model5", displayName: "Model 5", role: "MODEL", color: "#fbbf24" },
-  { username: "model6", displayName: "Model 6", role: "MODEL", color: "#fb7185" },
-  { username: "model7", displayName: "Model 7", role: "MODEL", color: "#c084fc" },
+  // Creators go by first name everywhere in the app.
+  // Colours are picked to stay apart from each other and from the orange UI.
+  { username: "chelsea", displayName: "Chelsea", role: "MODEL", color: "#d94f70", chaturbateUsername: "chelsea" },
+  { username: "amelia", displayName: "Amelia", role: "MODEL", color: "#c98a1b", chaturbateUsername: "amelia" },
+  { username: "brooks", displayName: "Brooks", role: "MODEL", color: "#3f8a44", chaturbateUsername: "brooks" },
+  { username: "tessa", displayName: "Tessa", role: "MODEL", color: "#8b5cc7", chaturbateUsername: "tessa" },
 
-  { username: "va1", displayName: "VA 1", role: "EMPLOYEE", color: "#94a3b8" },
-  { username: "manager1", displayName: "Stream Manager 1", role: "EMPLOYEE", color: "#64748b" },
+  { username: "va1", displayName: "VA 1", role: "EMPLOYEE", color: "#7a8b99" },
+  { username: "manager1", displayName: "Stream Manager 1", role: "EMPLOYEE", color: "#5a6b7a" },
 ];
 
 function tempPassword(): string {

@@ -10,9 +10,20 @@ function check(label: string, condition: boolean, extra = "") {
   if (!condition) failures++;
 }
 
+/** A throwaway user, so these tests never depend on who is on the roster. */
+const FIXTURE = "__test_calendar";
+
 async function main() {
-  const model = await db.user.findUniqueOrThrow({ where: { username: "model1" } });
-  await db.shift.deleteMany({});
+  await db.user.deleteMany({ where: { username: FIXTURE } });
+  const model = await db.user.create({
+    data: {
+      username: FIXTURE,
+      displayName: "Test Model",
+      role: "MODEL",
+      color: "#000000",
+      passwordHash: "x",
+    },
+  });
 
   // The exact case from the brief: Sept 9, 9:30 PM until 4:00 AM on Sept 10.
   const startsAt = localToUtc("2026-09-09", "21:30");
@@ -59,7 +70,7 @@ async function main() {
   check("28 days", feb.filter((c) => c.inMonth).length === 28);
   check("whole weeks only", feb.length % 7 === 0, String(feb.length));
 
-  await db.shift.deleteMany({});
+  await db.user.delete({ where: { id: model.id } });
   console.log(failures === 0 ? "\nAll calendar checks passed.\n" : `\n${failures} FAILED\n`);
   process.exit(failures === 0 ? 0 : 1);
 }

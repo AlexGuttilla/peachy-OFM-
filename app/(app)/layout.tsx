@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
+import { LogoLockup } from "@/components/Logo";
 import { logout } from "./actions";
 import NavTabs from "./NavTabs";
 
@@ -16,8 +17,8 @@ export default async function AppLayout({
     <>
       <header className="sticky top-0 z-10 border-b border-line bg-bg/90 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          <Link href="/live" className="text-lg font-semibold tracking-tight">
-            Peachy Ops
+          <Link href="/home" aria-label="Peachy home">
+            <LogoLockup />
           </Link>
           <div className="flex items-center gap-3 text-sm">
             <span className="text-muted">{user.displayName}</span>

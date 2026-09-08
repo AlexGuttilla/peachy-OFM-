@@ -1,17 +1,21 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth";
+import { PeachMark, Wordmark } from "@/components/Logo";
 import LoginForm from "./LoginForm";
 
 export default async function LoginPage() {
-  if (await currentUser()) redirect("/live");
+  if (await currentUser()) redirect("/welcome");
 
   return (
     <main className="flex-1 flex flex-col justify-center px-6 py-12">
       <div className="mx-auto w-full max-w-sm">
-        <h1 className="text-3xl font-semibold tracking-tight">Peachy Ops</h1>
-        <p className="mt-2 text-sm text-muted">
-          Schedules and hours for the roster.
-        </p>
+        <div className="flex flex-col items-center text-center">
+          <PeachMark className="size-20" title="Peachy" />
+          <Wordmark className="mt-3 h-16 w-44" />
+          <p className="mt-1 text-sm text-muted">
+            Schedules and hours for the roster.
+          </p>
+        </div>
         <LoginForm />
       </div>
     </main>

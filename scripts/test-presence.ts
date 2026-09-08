@@ -14,24 +14,40 @@ async function setLive(names: string[]) {
   await writeFile(".live-mock.json", JSON.stringify(names));
 }
 
+/** A throwaway room, so these tests never depend on who is on the roster. */
+const FIXTURE = "__test_presence";
+
 async function main() {
-  const model = await db.user.findUniqueOrThrow({ where: { username: "model1" } });
-  await db.workSession.deleteMany({});
-  await db.event.deleteMany({});
+  await db.user.deleteMany({ where: { username: FIXTURE } });
+  const model = await db.user.create({
+    data: {
+      username: FIXTURE,
+      displayName: "Test Model",
+      role: "MODEL",
+      color: "#000000",
+      passwordHash: "x",
+      chaturbateUsername: FIXTURE,
+    },
+  });
 
   console.log("\n1. She goes live -> session opens automatically");
-  await setLive(["model1"]);
+  await setLive([FIXTURE]);
   await pollPresence();
   let session = await db.workSession.findFirst({ where: { userId: model.id } });
   check("session opened", session !== null);
   check("session is open", session?.endedAt === null);
   check("source is CHATURBATE", session?.source === "CHATURBATE");
-  const wentLive = await db.event.findFirst({ where: { type: "WENT_LIVE" } });
+  const wentLive = await db.event.findFirst({
+    where: { type: "WENT_LIVE", userId: model.id },
+  });
   check("WENT_LIVE event written", wentLive !== null, wentLive?.message ?? "");
 
   console.log("\n2. Still live -> no duplicate session");
   await pollPresence();
-  check("still exactly one session", (await db.workSession.count()) === 1);
+  check(
+    "still exactly one session",
+    (await db.workSession.count({ where: { userId: model.id } })) === 1,
+  );
 
   console.log("\n3. Goes quiet, inside the grace window -> stays open");
   await setLive([]);
@@ -53,11 +69,13 @@ async function main() {
     session.endedAt?.getTime() === lastSeen.getTime(),
     `ended ${session.endedAt?.toISOString()} vs lastSeen ${lastSeen.toISOString()}`,
   );
-  const ended = await db.event.findFirst({ where: { type: "SHIFT_ENDED" } });
+  const ended = await db.event.findFirst({
+    where: { type: "SHIFT_ENDED", userId: model.id },
+  });
   check("SHIFT_ENDED event written", ended !== null, ended?.message ?? "");
 
   console.log("\n5. Comes back later -> a new, separate session");
-  await setLive(["model1"]);
+  await setLive([FIXTURE]);
   await pollPresence();
   check("two sessions now", (await db.workSession.count({ where: { userId: model.id } })) === 2);
   check(
@@ -66,8 +84,7 @@ async function main() {
   );
 
   await rm(".live-mock.json", { force: true });
-  await db.workSession.deleteMany({});
-  await db.event.deleteMany({});
+  await db.user.delete({ where: { id: model.id } });
 
   console.log(failures === 0 ? "\nAll presence checks passed.\n" : `\n${failures} FAILED\n`);
   process.exit(failures === 0 ? 0 : 1);

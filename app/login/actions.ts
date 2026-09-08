@@ -26,5 +26,5 @@ export async function login(
   }
 
   await createSession(user.id);
-  redirect("/live");
+  redirect("/welcome");
 }
