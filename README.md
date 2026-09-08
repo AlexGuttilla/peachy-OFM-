@@ -3,7 +3,7 @@
 Internal web app for the agency. Mobile-first — open it in your phone browser
 and add it to your home screen. No app store, no download for anyone.
 
-Two screens:
+Three screens:
 
 1. **Schedule** — a month calendar. Each model signs in and enters her own
    hours; the owner sees everybody's and can edit anyone's. Shifts that run
@@ -12,6 +12,16 @@ Two screens:
 
 2. **Who's on now** — a live board. Models currently broadcasting, the team
    currently clocked in, and anyone scheduled right now who is neither.
+
+3. **Tokens** — what each girl earned, typed in after the stream. Tap a name,
+   tap Tonight or Last night, type the number, save. The amount is usually
+   pasted rather than typed, so `4,820`, `4820 tk` and `4 820` all read as
+   4820. Every entry carries the name of whoever logged it, and is one tap to
+   undo. Weekly totals, per-model totals, and a night-by-night list sit under
+   the form.
+
+   Only the owner and the team can log tokens. A model signing in sees her own
+   numbers and nobody else's.
 
 ## How the automatic clock-in works
 
@@ -27,6 +37,10 @@ A poller checks each model's Chaturbate status every minute:
 - She comes back later → that is a new, separate session.
 
 Employees clock in and out with the button on the live board instead.
+
+Tonight's logged tokens show against each live model on the board. Until
+Chaturbate is connected those hand-entered numbers are the only real ones, so
+they take precedence over the feed's own count.
 
 ## Setup
 
@@ -99,7 +113,8 @@ npm test              # calendar maths and the presence state machine
 
 `test:presence` covers the part most worth protecting: that a shift ends at
 the last seen time rather than five minutes later, that a brief drop does not
-close a shift, and that a return opens a new one.
+close a shift, and that a return opens a new one. `test:tokens` covers the
+pasted-amount parsing, including what should bounce back.
 
 ## Moving to Postgres
 
@@ -112,8 +127,7 @@ SQLite is genuinely fine at this size, but to switch:
 
 ## Not built yet
 
-- Telegram notifications (the activity feed on the live board covers this
-  in-app for now)
-- Tokens-per-session totals depend on the live Events API feed
 - Planned-vs-actual reporting across a whole month
 - A page for adding and removing people (edit `prisma/seed.ts` and re-run)
+- Push notifications when someone is scheduled but not on (the live board
+  shows this in-app under "Scheduled but not on")

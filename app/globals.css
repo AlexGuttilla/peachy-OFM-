@@ -1,28 +1,43 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #fdf8f6;
+  /* Near-white pink ground, orange highlights. */
+  --bg: #fff8f5;
   --surface: #ffffff;
-  --border: #ecdfd9;
-  --text: #2b1d1a;
-  --muted: #8a7269;
-  --accent: #e8607d;
-  --accent-soft: #fde8ed;
-  --live: #16a34a;
+  --border: #f7e2d6;
+  --text: #2b1a10;
+  --muted: #8a6a58;
+
+  /* --accent fills shapes; --accent-strong carries text and sits behind it. */
+  --accent: #ea580c;
+  --accent-strong: #c2410c;
+  --accent-soft: #ffedd5;
+  /* Text that sits ON --accent-strong. Flips in dark mode, where white on
+     orange is only 2.8:1. */
+  --on-accent: #ffffff;
+
+  /* Green stays semantic: it means "on air", not brand. */
+  --live: #15803d;
   --live-soft: #dcfce7;
+  --live-line: #86efac;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #16100f;
-    --surface: #201817;
-    --border: #362a28;
-    --text: #f6ecea;
-    --muted: #a89490;
-    --accent: #f2718c;
-    --accent-soft: #3a1f27;
+    --bg: #191008;
+    --surface: #241810;
+    --border: #3b2a1d;
+    --text: #f9efe8;
+    --muted: #b5988a;
+
+    --accent: #fb923c;
+    --accent-strong: #f97316;
+    --accent-soft: #3a2410;
+    --on-accent: #21140a;
+
     --live: #4ade80;
-    --live-soft: #14321f;
+    --live-soft: #13301d;
+    --live-line: #256b3d;
   }
 }
 
@@ -33,9 +48,12 @@
   --color-ink: var(--text);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
   --color-live: var(--live);
   --color-live-soft: var(--live-soft);
+  --color-live-line: var(--live-line);
   --font-sans: var(--font-geist-sans);
 }
 

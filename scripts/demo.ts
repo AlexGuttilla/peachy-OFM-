@@ -5,6 +5,7 @@ const now = new Date();
 const ago = (mins: number) => new Date(now.getTime() - mins * 60_000);
 
 async function main() {
+  await db.tokenEntry.deleteMany({});
   await db.workSession.deleteMany({});
   await db.event.deleteMany({});
   await db.shift.deleteMany({});
@@ -46,6 +47,24 @@ async function main() {
       { userId: m1.id, type: "WENT_LIVE", message: "Model 1 went live at 5:07 AM" },
       { userId: mgr.id, type: "CLOCKED_IN", message: "Stream Manager 1 clocked in at 6:25 AM" },
       { userId: m3.id, type: "WENT_LIVE", message: "Model 3 went live at 6:51 AM" },
+    ],
+  });
+
+  // A few nights of tokens, the way the stream manager would have typed them.
+  const day = (back: number) => {
+    const d = new Date(now.getTime() - back * 86400_000);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  await db.tokenEntry.createMany({
+    data: [
+      { userId: m1.id, streamDate: day(0), tokens: 4820, recordedById: mgr.id },
+      { userId: m3.id, streamDate: day(0), tokens: 610, recordedById: mgr.id, note: "short night" },
+      { userId: m1.id, streamDate: day(1), tokens: 7115, recordedById: mgr.id },
+      { userId: m2.id, streamDate: day(1), tokens: 2940, recordedById: va.id },
+      { userId: m3.id, streamDate: day(2), tokens: 5380, recordedById: mgr.id },
+      { userId: m1.id, streamDate: day(3), tokens: 3260, recordedById: va.id },
+      { userId: m2.id, streamDate: day(4), tokens: 8410, recordedById: mgr.id, note: "promo night" },
     ],
   });
 

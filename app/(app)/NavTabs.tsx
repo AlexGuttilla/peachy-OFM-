@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/schedule", label: "Schedule" },
   { href: "/live", label: "Who's On" },
+  { href: "/tokens", label: "Tokens" },
 ];
 
 export default function NavTabs() {
@@ -13,7 +14,7 @@ export default function NavTabs() {
 
   return (
     <nav className="pb-safe fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface">
-      <div className="mx-auto grid max-w-3xl grid-cols-2">
+      <div className="mx-auto grid max-w-3xl grid-cols-3">
         {TABS.map((tab) => {
           const active = pathname.startsWith(tab.href);
           return (
@@ -22,7 +23,7 @@ export default function NavTabs() {
               href={tab.href}
               aria-current={active ? "page" : undefined}
               className={`py-3 text-center text-sm font-medium ${
-                active ? "text-accent" : "text-muted"
+                active ? "text-accent-strong" : "text-muted"
               }`}
             >
               {tab.label}

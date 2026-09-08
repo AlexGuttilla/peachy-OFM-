@@ -14,7 +14,7 @@ export default async function LivePage() {
   const now = new Date();
   const since = new Date(now.getTime() - LOOKBACK_HOURS * 3600_000);
 
-  const [open, myOpen, scheduled, events] = await Promise.all([
+  const [open, myOpen, scheduled, events, tonight] = await Promise.all([
     db.workSession.findMany({
       where: { endedAt: null },
       include: { user: { select: { displayName: true, color: true, role: true } } },
@@ -30,7 +30,18 @@ export default async function LivePage() {
       orderBy: { createdAt: "desc" },
       take: 15,
     }),
+    db.tokenEntry.groupBy({
+      by: ["userId"],
+      where: { streamDate: dayKey(now) },
+      _sum: { tokens: true },
+    }),
   ]);
+
+  // Tokens logged by hand tonight. Until Chaturbate is connected these are the
+  // only real numbers, so they take precedence over the session's own count.
+  const loggedTonight = new Map(
+    tonight.map((row) => [row.userId, row._sum.tokens ?? 0]),
+  );
 
   const models = open.filter((s) => s.user.role === "MODEL");
   const staff = open.filter((s) => s.user.role !== "MODEL");
@@ -53,7 +64,7 @@ export default async function LivePage() {
           type="submit"
           disabled={myOpen?.source === "CHATURBATE"}
           className={`w-full rounded-xl px-4 py-3 text-sm font-medium disabled:opacity-60 ${
-            myOpen ? "border border-line" : "bg-accent text-white"
+            myOpen ? "border border-line" : "bg-accent-strong text-on-accent"
           }`}
         >
           {!myOpen
@@ -71,7 +82,7 @@ export default async function LivePage() {
             color={session.user.color}
             name={session.user.displayName}
             detail={`live ${duration(session.startedAt, now)} · since ${clockTime(session.startedAt)}`}
-            trailing={session.tokens > 0 ? `${session.tokens.toLocaleString()} tk` : undefined}
+            trailing={tokenLabel(loggedTonight.get(session.userId) ?? 0, session.tokens)}
             live
           />
         ))}
@@ -123,6 +134,12 @@ export default async function LivePage() {
   );
 }
 
+/** Prefer what a person logged tonight; fall back to the live feed's count. */
+function tokenLabel(logged: number, fromFeed: number): string | undefined {
+  const tokens = logged > 0 ? logged : fromFeed;
+  return tokens > 0 ? `${tokens.toLocaleString()} tk` : undefined;
+}
+
 function Section({
   title,
   count,
@@ -164,7 +181,7 @@ function Row({
   return (
     <li
       className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
-        live ? "border-live/40 bg-live-soft" : "border-line"
+        live ? "border-live-line bg-live-soft" : "border-line"
       } ${muted ? "opacity-70" : ""}`}
     >
       <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ background: color }} />

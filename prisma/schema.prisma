@@ -36,6 +36,9 @@ model User {
   shifts   Shift[]
   sessions WorkSession[]
   events   Event[]
+
+  tokenEntries    TokenEntry[] @relation("earner")
+  recordedEntries TokenEntry[] @relation("recorder")
 }
 
 /// A shift somebody has committed to in advance. May cross midnight.
@@ -89,4 +92,28 @@ model Event {
   readAt    DateTime?
 
   @@index([createdAt])
+}
+
+/// Tokens a model earned on a given night, typed in by hand after the stream.
+/// This is the number the team actually trusts — the Chaturbate feed is a
+/// cross-check, not the record.
+model TokenEntry {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("earner", fields: [userId], references: [id], onDelete: Cascade)
+
+  /// The business-timezone night this belongs to, as "2026-09-09". A stream
+  /// running past midnight is still logged against the day it started.
+  streamDate String
+  tokens     Int
+  note       String?
+
+  /// Who typed it in, so a wrong number has a name against it.
+  recordedById String
+  recordedBy   User   @relation("recorder", fields: [recordedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([streamDate])
+  @@index([userId, streamDate])
 }

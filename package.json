@@ -12,7 +12,8 @@
     "demo": "tsx scripts/demo.ts",
     "test:presence": "tsx scripts/test-presence.ts",
     "test:calendar": "tsx scripts/test-calendar.ts",
-    "test": "npm run test:calendar && npm run test:presence"
+    "test": "npm run test:calendar && npm run test:presence && npm run test:tokens",
+    "test:tokens": "tsx scripts/test-tokens.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",

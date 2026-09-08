@@ -40,7 +40,7 @@ export default function LoginForm() {
       </div>
 
       {state.error ? (
-        <p role="alert" className="text-sm text-accent">
+        <p role="alert" className="text-sm text-accent-strong">
           {state.error}
         </p>
       ) : null}
@@ -48,7 +48,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-xl bg-accent px-4 py-3 text-base font-medium text-white disabled:opacity-60"
+        className="w-full rounded-xl bg-accent-strong px-4 py-3 text-base font-medium text-on-accent disabled:opacity-60"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

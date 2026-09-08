@@ -58,7 +58,7 @@ export default function CalendarBoard({
             <span
               className={`grid size-6 place-items-center rounded-full text-xs ${
                 cell.key === today
-                  ? "bg-accent font-semibold text-white"
+                  ? "bg-accent-strong font-semibold text-on-accent"
                   : "text-ink"
               }`}
             >
@@ -179,7 +179,7 @@ function DaySheet({
                       </button>
                       <form action={deleteShift}>
                         <input type="hidden" name="shiftId" value={shift.id} />
-                        <button type="submit" className="text-accent underline underline-offset-4">
+                        <button type="submit" className="text-accent-strong underline underline-offset-4">
                           Remove
                         </button>
                       </form>
@@ -207,7 +207,7 @@ function DaySheet({
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="mt-4 w-full rounded-xl bg-accent px-4 py-3 text-sm font-medium text-white"
+            className="mt-4 w-full rounded-xl bg-accent-strong px-4 py-3 text-sm font-medium text-on-accent"
           >
             {viewer.role === "OWNER" ? "Add hours" : "Add my hours"}
           </button>
@@ -305,7 +305,7 @@ function ShiftForm({
       </label>
 
       {state.error ? (
-        <p role="alert" className="text-sm text-accent">
+        <p role="alert" className="text-sm text-accent-strong">
           {state.error}
         </p>
       ) : null}
@@ -314,7 +314,7 @@ function ShiftForm({
         <button
           type="submit"
           disabled={pending}
-          className="flex-1 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+          className="flex-1 rounded-lg bg-accent-strong px-4 py-2.5 text-sm font-medium text-on-accent disabled:opacity-60"
         >
           {pending ? "Saving…" : shift ? "Save changes" : "Add to calendar"}
         </button>
