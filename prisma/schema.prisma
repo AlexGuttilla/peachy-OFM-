@@ -13,9 +13,11 @@ datasource db {
 
 /// Everyone who logs in: the owner, the models, the employees (VAs / stream managers).
 model User {
-  id           String  @id @default(cuid())
-  username     String  @unique
-  passwordHash String
+  id String @id @default(cuid())
+  /// Both stay null until the person completes setup from her invite link and
+  /// chooses her own credentials. A null in either means she cannot sign in.
+  username     String? @unique
+  passwordHash String?
   displayName  String
   /// OWNER | MODEL | EMPLOYEE
   role         String
@@ -39,6 +41,23 @@ model User {
 
   tokenEntries    TokenEntry[] @relation("earner")
   recordedEntries TokenEntry[] @relation("recorder")
+  invites         Invite[]
+}
+
+/// A one-time setup link. The owner creates one per person and sends her the
+/// URL; she opens it once, picks her own username and password, and is signed
+/// in from then on. Nobody ever hands out a password.
+model Invite {
+  id     String @id @default(cuid())
+  code   String @unique
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 /// A shift somebody has committed to in advance. May cross midnight.

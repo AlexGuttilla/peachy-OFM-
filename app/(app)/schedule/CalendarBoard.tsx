@@ -1,10 +1,10 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import type { DayCell, ShiftView } from "@/lib/calendar";
+import type { DayCell, SessionView, ShiftView } from "@/lib/calendar";
 import { deleteShift, saveShift, type ShiftFormState } from "./actions";
 
-type Cell = DayCell & { shifts: ShiftView[] };
+type Cell = DayCell & { shifts: ShiftView[]; sessions: SessionView[] };
 type Person = { id: string; displayName: string; color: string; role: string };
 type Viewer = { id: string; role: string; displayName: string };
 
@@ -66,6 +66,13 @@ export default function CalendarBoard({
             </span>
 
             <span className="flex flex-wrap justify-center gap-0.5">
+              {cell.sessions.length > 0 ? (
+                <span
+                  aria-hidden
+                  title="streamed"
+                  className="size-1.5 rounded-full border-2 border-live"
+                />
+              ) : null}
               {cell.shifts.slice(0, 4).map((shift) => (
                 <span
                   key={shift.id}
@@ -137,10 +144,12 @@ function DaySheet({
 
         <h2 className="text-base font-semibold">{longDate(cell.key)}</h2>
 
+        <h3 className="mt-3 text-xs font-medium text-muted">Scheduled</h3>
+
         {cell.shifts.length === 0 ? (
-          <p className="mt-3 text-sm text-muted">Nobody scheduled yet.</p>
+          <p className="mt-1.5 text-sm text-muted">Nothing scheduled yet.</p>
         ) : (
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-1.5 space-y-2">
             {cell.shifts.map((shift) => {
               const continuation = shift.endDay === cell.key && shift.crossesMidnight;
               return (
@@ -190,6 +199,50 @@ function DaySheet({
             })}
           </ul>
         )}
+
+        {cell.sessions.length > 0 ? (
+          <div className="mt-4">
+            <h3 className="text-xs font-medium text-muted">Actually streamed</h3>
+            <ul className="mt-1.5 space-y-2">
+              {cell.sessions.map((session) => {
+                const continuation =
+                  session.endDay === cell.key && session.crossesMidnight;
+                return (
+                  <li
+                    key={session.id}
+                    className="flex items-center gap-3 rounded-xl border border-live-line bg-live-soft px-3 py-2.5"
+                  >
+                    <span
+                      aria-hidden
+                      className="size-2.5 shrink-0 rounded-full"
+                      style={{ background: session.color }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {session.displayName}
+                        {session.open ? (
+                          <span className="ml-2 text-xs font-normal text-live">
+                            ● still on
+                          </span>
+                        ) : null}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {continuation
+                          ? `ran until ${session.endLabel ?? "now"}, from ${session.startLabel} yesterday`
+                          : `${session.startLabel} – ${session.endLabel ?? "now"}${
+                              session.crossesMidnight ? " next day" : ""
+                            }`}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-sm font-medium tabular-nums">
+                      {session.lengthLabel}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : null}
 
         {showForm ? (
           <ShiftForm

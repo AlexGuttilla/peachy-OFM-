@@ -35,7 +35,7 @@ export default async function AppLayout({
         {children}
       </main>
 
-      <NavTabs />
+      <NavTabs isOwner={user.role === "OWNER"} />
     </>
   );
 }

@@ -5,13 +5,18 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 
 const COOKIE = "peachy_session";
-const MAX_AGE_DAYS = 30;
+/**
+ * People sign in once on their phone and stay signed in. A year-long cookie
+ * is what "remember my login" actually means for an internal tool nobody
+ * wants to re-authenticate into before every shift.
+ */
+const MAX_AGE_DAYS = 365;
 
 export type Role = "OWNER" | "MODEL" | "EMPLOYEE";
 
 export type SessionUser = {
   id: string;
-  username: string;
+  username: string | null;
   displayName: string;
   role: Role;
   color: string;
@@ -38,7 +43,16 @@ export async function hashPassword(plain: string): Promise<string> {
   return bcrypt.hash(plain, 12);
 }
 
-export async function verifyPassword(plain: string, hash: string): Promise<boolean> {
+export async function verifyPassword(
+  plain: string,
+  hash: string | null,
+): Promise<boolean> {
+  // Someone who has not finished setup has no hash. Still run a comparison so
+  // the response takes the same time as a wrong password on a real account.
+  if (!hash) {
+    await bcrypt.compare(plain, "$2a$12$" + "x".repeat(53));
+    return false;
+  }
   return bcrypt.compare(plain, hash);
 }
 

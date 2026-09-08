@@ -3,20 +3,25 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const TABS = [
-  { href: "/home", label: "Home" },
-  { href: "/schedule", label: "Schedule" },
-  { href: "/live", label: "Clocked In" },
-  { href: "/tokens", label: "Tokens" },
+const ALL_TABS = [
+  { href: "/home", label: "Home", ownerOnly: false },
+  { href: "/schedule", label: "Schedule", ownerOnly: false },
+  { href: "/live", label: "Clocked In", ownerOnly: false },
+  { href: "/tokens", label: "Tokens", ownerOnly: false },
+  { href: "/team", label: "Team", ownerOnly: true },
 ];
 
-export default function NavTabs() {
+export default function NavTabs({ isOwner }: { isOwner: boolean }) {
   const pathname = usePathname();
+  const tabs = ALL_TABS.filter((tab) => isOwner || !tab.ownerOnly);
 
   return (
     <nav className="pb-safe fixed inset-x-0 bottom-0 z-10 border-t border-line bg-surface">
-      <div className="mx-auto grid max-w-3xl grid-cols-4">
-        {TABS.map((tab) => {
+      <div
+        className="mx-auto grid max-w-3xl"
+        style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
+      >
+        {tabs.map((tab) => {
           const active = pathname.startsWith(tab.href);
           return (
             <Link

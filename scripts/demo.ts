@@ -10,12 +10,28 @@ async function main() {
   await db.event.deleteMany({});
   await db.shift.deleteMany({});
 
-  const u = async (username: string) =>
-    db.user.findUniqueOrThrow({ where: { username } });
+  // Creators have no username until they set one up, so look them up by name.
+  const u = async (displayName: string) => {
+    const found = await db.user.findFirst({ where: { displayName } });
+    if (!found) throw new Error(`No user named ${displayName}`);
+    return found;
+  };
 
   const [m1, m2, m3, va, mgr] = await Promise.all([
-    u("chelsea"), u("amelia"), u("brooks"), u("va1"), u("manager1"),
+    u("Chelsea"), u("Amelia"), u("Brooks"), u("VA 1"), u("Stream Manager 1"),
   ]);
+
+  // A finished shift from last night, so a past day has real hours on it.
+  await db.workSession.create({
+    data: {
+      userId: m1.id,
+      startedAt: new Date(now.getTime() - 27 * 3600_000),
+      endedAt: new Date(now.getTime() - 20.5 * 3600_000),
+      lastSeenAt: new Date(now.getTime() - 20.5 * 3600_000),
+      source: "CHATURBATE",
+      tokens: 7115,
+    },
+  });
 
   // Two models live right now, detected automatically.
   await db.workSession.create({

@@ -1,3 +1,48 @@
+import fs from "node:fs";
+import path from "node:path";
+
+/**
+ * The real logo artwork, if it has been added to the repo.
+ *
+ * Drop the company logo at `public/logo.png` (or .svg / .webp) and every place
+ * the brand appears switches to it automatically. Until then the drawn peach
+ * below stands in. Checked once at module load, not per render.
+ */
+const BRAND_FILE = ["logo.svg", "logo.png", "logo.webp", "logo.jpg"]
+  .map((name) => ({ name, full: path.join(process.cwd(), "public", name) }))
+  .find(({ full }) => {
+    try {
+      return fs.existsSync(full);
+    } catch {
+      return false;
+    }
+  });
+
+/**
+ * The brand lockup: the real artwork when present, the drawn stand-in when not.
+ * Server component — it touches the filesystem.
+ */
+export function BrandLogo({ className }: { className?: string }) {
+  if (BRAND_FILE) {
+    return (
+      // Plain img rather than next/image: the file is small, already the right
+      // size, and this keeps the component usable anywhere without config.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={`/${BRAND_FILE.name}`}
+        alt="Peachy"
+        className={`h-auto w-full max-w-full ${className ?? ""}`}
+      />
+    );
+  }
+  return (
+    <span className={`flex flex-col items-center ${className ?? ""}`}>
+      <PeachMark className="size-24" title="Peachy" />
+      <Wordmark className="mt-3 h-20 w-56" />
+    </span>
+  );
+}
+
 /**
  * The Peachy mark, redrawn as SVG so it stays sharp at any size and can be
  * recoloured by theme. The proportions follow the company logo: a two-lobed
@@ -102,8 +147,18 @@ export function Wordmark({ className }: { className?: string }) {
   );
 }
 
-/** Peach and wordmark side by side, for the app header. */
+/** Small horizontal lockup for the app header. */
 export function LogoLockup({ className }: { className?: string }) {
+  if (BRAND_FILE) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={`/${BRAND_FILE.name}`}
+        alt="Peachy"
+        className={`h-8 w-auto ${className ?? ""}`}
+      />
+    );
+  }
   return (
     <span className={`flex items-center gap-2 ${className ?? ""}`}>
       <PeachMark className="size-7 shrink-0" />

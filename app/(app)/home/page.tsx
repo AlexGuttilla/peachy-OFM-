@@ -36,6 +36,14 @@ export default async function HomePage() {
     },
   ];
 
+  if (isOwner) {
+    cards.push({
+      href: "/team",
+      title: "Team",
+      detail: "Add creators and send setup links",
+    });
+  }
+
   return (
     <div className="flex flex-col items-center">
       <PeachMark className="mt-4 size-16" title="Peachy" />

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { clockTime, duration, dayKey } from "@/lib/time";
+import { formatTokens, formatUsd, tokensToUsd } from "@/lib/tokens";
 import { clockIn, clockOut } from "./actions";
 import AutoRefresh from "./AutoRefresh";
 
@@ -14,25 +15,29 @@ export default async function LivePage() {
   const now = new Date();
   const since = new Date(now.getTime() - LOOKBACK_HOURS * 3600_000);
 
+  // A creator's board is about her own shift. She never sees anyone else.
+  const isCreator = viewer.role === "MODEL";
+  const onlyMine = isCreator ? { userId: viewer.id } : {};
+
   const [open, myOpen, scheduled, events, tonight] = await Promise.all([
     db.workSession.findMany({
-      where: { endedAt: null },
+      where: { endedAt: null, ...onlyMine },
       include: { user: { select: { displayName: true, color: true, role: true } } },
       orderBy: { startedAt: "asc" },
     }),
     db.workSession.findFirst({ where: { userId: viewer.id, endedAt: null } }),
     db.shift.findMany({
-      where: { startsAt: { lte: now }, endsAt: { gte: now } },
+      where: { startsAt: { lte: now }, endsAt: { gte: now }, ...onlyMine },
       include: { user: { select: { id: true, displayName: true, color: true } } },
     }),
     db.event.findMany({
-      where: { createdAt: { gte: since } },
+      where: { createdAt: { gte: since }, ...onlyMine },
       orderBy: { createdAt: "desc" },
       take: 15,
     }),
     db.tokenEntry.groupBy({
       by: ["userId"],
-      where: { streamDate: dayKey(now) },
+      where: { streamDate: dayKey(now), ...onlyMine },
       _sum: { tokens: true },
     }),
   ]);
@@ -55,7 +60,9 @@ export default async function LivePage() {
       <AutoRefresh seconds={30} />
 
       <div className="flex items-baseline justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">Who&rsquo;s on now</h1>
+        <h1 className="text-xl font-semibold tracking-tight">
+          {isCreator ? "Your hours" : "Who’s on now"}
+        </h1>
         <p className="text-xs text-muted">{dayKey(now)} · {clockTime(now)}</p>
       </div>
 
@@ -75,7 +82,7 @@ export default async function LivePage() {
         </button>
       </form>
 
-      <Section title="Models live" count={models.length}>
+      <Section title={isCreator ? "You’re live" : "Models live"} count={models.length}>
         {models.map((session) => (
           <Row
             key={session.id}
@@ -88,19 +95,24 @@ export default async function LivePage() {
         ))}
       </Section>
 
-      <Section title="Team clocked in" count={staff.length}>
-        {staff.map((session) => (
-          <Row
-            key={session.id}
-            color={session.user.color}
-            name={session.user.displayName}
-            detail={`in ${duration(session.startedAt, now)} · since ${clockTime(session.startedAt)}`}
-          />
-        ))}
-      </Section>
+      {isCreator ? null : (
+        <Section title="Team clocked in" count={staff.length}>
+          {staff.map((session) => (
+            <Row
+              key={session.id}
+              color={session.user.color}
+              name={session.user.displayName}
+              detail={`in ${duration(session.startedAt, now)} · since ${clockTime(session.startedAt)}`}
+            />
+          ))}
+        </Section>
+      )}
 
       {missing.length > 0 ? (
-        <Section title="Scheduled but not on" count={missing.length}>
+        <Section
+          title={isCreator ? "You’re scheduled now" : "Scheduled but not on"}
+          count={missing.length}
+        >
           {missing.map((shift) => (
             <Row
               key={shift.id}
@@ -114,7 +126,9 @@ export default async function LivePage() {
       ) : null}
 
       <section>
-        <h2 className="text-sm font-semibold">Recent activity</h2>
+        <h2 className="text-sm font-semibold">
+          {isCreator ? "Your recent activity" : "Recent activity"}
+        </h2>
         {events.length === 0 ? (
           <p className="mt-2 text-sm text-muted">Nothing in the last 24 hours.</p>
         ) : (
@@ -135,9 +149,19 @@ export default async function LivePage() {
 }
 
 /** Prefer what a person logged tonight; fall back to the live feed's count. */
-function tokenLabel(logged: number, fromFeed: number): string | undefined {
+function tokenLabel(logged: number, fromFeed: number): React.ReactNode {
   const tokens = logged > 0 ? logged : fromFeed;
-  return tokens > 0 ? `${tokens.toLocaleString()} tk` : undefined;
+  if (tokens <= 0) return undefined;
+  return (
+    <span className="block text-right">
+      <span className="block text-sm font-medium tabular-nums">
+        {formatUsd(tokensToUsd(tokens))}
+      </span>
+      <span className="block text-xs text-muted tabular-nums">
+        {formatTokens(tokens)}
+      </span>
+    </span>
+  );
 }
 
 function Section({
@@ -174,7 +198,7 @@ function Row({
   color: string;
   name: string;
   detail: string;
-  trailing?: string;
+  trailing?: React.ReactNode;
   live?: boolean;
   muted?: boolean;
 }) {
@@ -192,7 +216,7 @@ function Row({
         </p>
         <p className="text-xs text-muted">{detail}</p>
       </div>
-      {trailing ? <span className="shrink-0 text-sm tabular-nums">{trailing}</span> : null}
+      {trailing ? <span className="shrink-0">{trailing}</span> : null}
     </li>
   );
 }

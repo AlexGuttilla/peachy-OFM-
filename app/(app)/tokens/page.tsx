@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { todayKey, fmt } from "@/lib/time";
+import { formatTokens, formatUsd, tokensToUsd } from "@/lib/tokens";
 import { deleteTokenEntry } from "./actions";
 import TokenForm from "./TokenForm";
 
@@ -81,10 +82,13 @@ export default async function TokensPage() {
         <p className="text-xs text-muted">last {WINDOW_DAYS} days</p>
       </div>
 
-      <div className="rounded-2xl border border-line bg-accent-soft px-4 py-3">
+      <div className="rounded-2xl border border-line bg-accent-soft px-4 py-3.5">
         <p className="text-xs text-muted">Total this week</p>
-        <p className="text-2xl font-semibold tabular-nums">
-          {weekTotal.toLocaleString()} <span className="text-base font-normal">tk</span>
+        <p className="mt-0.5 text-3xl font-semibold tabular-nums">
+          {formatUsd(tokensToUsd(weekTotal))}
+        </p>
+        <p className="mt-0.5 text-sm text-muted tabular-nums">
+          {formatTokens(weekTotal)}
         </p>
       </div>
 
@@ -105,8 +109,13 @@ export default async function TokensPage() {
                   style={{ background: row.color }}
                 />
                 <span className="flex-1 truncate text-sm font-medium">{row.name}</span>
-                <span className="shrink-0 text-sm tabular-nums">
-                  {row.total.toLocaleString()} tk
+                <span className="shrink-0 text-right">
+                  <span className="block text-sm font-medium tabular-nums">
+                    {formatUsd(tokensToUsd(row.total))}
+                  </span>
+                  <span className="block text-xs text-muted tabular-nums">
+                    {formatTokens(row.total)}
+                  </span>
                 </span>
               </li>
             ))}
@@ -129,7 +138,7 @@ export default async function TokensPage() {
                     {date === today ? "Tonight" : shortDate(date)}
                   </h3>
                   <span className="text-xs tabular-nums text-muted">
-                    {rows.reduce((sum, r) => sum + r.tokens, 0).toLocaleString()} tk
+                    {formatUsd(tokensToUsd(rows.reduce((sum, r) => sum + r.tokens, 0)))}
                   </span>
                 </div>
                 <ul className="mt-1.5 space-y-1.5">
@@ -152,8 +161,13 @@ export default async function TokensPage() {
                           {entry.note ? ` · ${entry.note}` : ""}
                         </p>
                       </div>
-                      <span className="shrink-0 text-sm tabular-nums">
-                        {entry.tokens.toLocaleString()} tk
+                      <span className="shrink-0 text-right">
+                        <span className="block text-sm font-medium tabular-nums">
+                          {formatUsd(tokensToUsd(entry.tokens))}
+                        </span>
+                        <span className="block text-xs text-muted tabular-nums">
+                          {formatTokens(entry.tokens)}
+                        </span>
                       </span>
                       {canRecord ? (
                         <form action={deleteTokenEntry}>

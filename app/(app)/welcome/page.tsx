@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
-import { PeachMark, Wordmark } from "@/components/Logo";
+import { BrandLogo } from "@/components/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -9,8 +9,7 @@ export default async function WelcomePage() {
 
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center text-center">
-      <PeachMark className="size-28" title="Peachy" />
-      <Wordmark className="mt-4 h-20 w-56" />
+      <BrandLogo className="w-64" />
 
       <p className="mt-2 text-sm text-muted">
         Hi {user.displayName.split(" ")[0]}

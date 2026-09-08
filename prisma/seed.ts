@@ -34,33 +34,43 @@ async function main() {
   const created: Array<[string, string]> = [];
 
   for (const person of ROSTER) {
-    const existing = await db.user.findUnique({ where: { username: person.username } });
+    const existing = await db.user.findFirst({
+      where: { displayName: person.displayName },
+    });
     if (existing) continue;
 
-    const password = tempPassword();
+    // Only the owner is seeded with a password. Everyone else chooses their
+    // own username and password from a setup link on the Team page.
+    const isOwner = person.role === "OWNER";
+    const password = isOwner ? tempPassword() : null;
+
     await db.user.create({
       data: {
-        username: person.username,
+        username: isOwner ? person.username : null,
         displayName: person.displayName,
         role: person.role,
         color: person.color,
         chaturbateUsername: person.chaturbateUsername ?? null,
-        passwordHash: await bcrypt.hash(password, 12),
+        passwordHash: password ? await bcrypt.hash(password, 12) : null,
       },
     });
-    created.push([person.username, password]);
+
+    if (password) created.push([person.username, password]);
   }
 
   if (created.length === 0) {
-    console.log("Everyone in the roster already exists — nothing to do.");
+    console.log("Roster already in place — nothing to do.");
     return;
   }
 
-  console.log("\nAccounts created. Save these now, they are not shown again:\n");
+  console.log("\nOwner account. Save this now, it is not shown again:\n");
   for (const [username, password] of created) {
     console.log(`  ${username.padEnd(12)} ${password}`);
   }
-  console.log("\nEveryone can change their own password after logging in.\n");
+  console.log(
+    "\nEveryone else signs in through a setup link — open the Team page,\n" +
+      "create a link for each person, and send it to them.\n",
+  );
 }
 
 main()

@@ -2,12 +2,14 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import {
+  byDay,
   buildGrid,
   gridRange,
   monthLabel,
   parseMonth,
   shiftMonth,
   shiftsByDay,
+  toSessionView,
   toShiftView,
 } from "@/lib/calendar";
 import { todayKey } from "@/lib/time";
@@ -25,15 +27,28 @@ export default async function SchedulePage({
   const { year, month } = parseMonth(monthParam);
 
   const { from, to } = gridRange(year, month);
+  const now = new Date();
 
-  const [shifts, roster] = await Promise.all([
+  // A creator sees her own calendar and nobody else's.
+  const isCreator = user.role === "MODEL";
+  const onlyMine = isCreator ? { userId: user.id } : {};
+
+  const [shifts, sessions, roster] = await Promise.all([
     db.shift.findMany({
-      where: { startsAt: { gte: from, lt: to } },
+      where: { startsAt: { gte: from, lt: to }, ...onlyMine },
       include: { user: { select: { displayName: true, color: true } } },
       orderBy: { startsAt: "asc" },
     }),
+    // What was actually worked, so a day can be compared against its plan.
+    db.workSession.findMany({
+      where: { startedAt: { gte: from, lt: to }, ...onlyMine },
+      include: { user: { select: { displayName: true, color: true } } },
+      orderBy: { startedAt: "asc" },
+    }),
     db.user.findMany({
-      where: { active: true, role: { in: ["MODEL", "EMPLOYEE"] } },
+      where: isCreator
+        ? { id: user.id }
+        : { active: true, role: { in: ["MODEL", "EMPLOYEE"] } },
       select: { id: true, displayName: true, color: true, role: true },
       // Models first — they are who the owner is usually scheduling.
       orderBy: [{ role: "desc" }, { displayName: "asc" }],
@@ -44,10 +59,15 @@ export default async function SchedulePage({
     toShiftView(shift, user.role === "OWNER" || shift.userId === user.id),
   );
 
-  const byDay = shiftsByDay(views);
+  const sessionViews = sessions.map((session) => toSessionView(session, now));
+
+  const shiftDays = shiftsByDay(views);
+  const sessionDays = byDay(sessionViews);
+
   const grid = buildGrid(year, month).map((cell) => ({
     ...cell,
-    shifts: byDay.get(cell.key) ?? [],
+    shifts: shiftDays.get(cell.key) ?? [],
+    sessions: sessionDays.get(cell.key) ?? [],
   }));
 
   return (
@@ -82,7 +102,7 @@ export default async function SchedulePage({
       />
 
       <div className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted">
-        {roster.map((person) => (
+        {(isCreator ? [] : roster).map((person) => (
           <span key={person.id} className="flex items-center gap-1.5">
             <span
               aria-hidden

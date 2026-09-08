@@ -19,10 +19,16 @@ Behind those:
    past midnight (9:30 PM → 4:00 AM) are entered as one shift and shown on
    both days, solid on the day it starts and faded on the day it finishes.
 
+   Tapping a day shows what was **scheduled** and, under it, what was
+   **actually streamed** — start, end and length, e.g. `9:32 PM – 4:07 AM ·
+   6h 35m`. Days that were streamed carry a green ring on the calendar.
+
 2. **Who's on now** — a live board. Models currently broadcasting, the team
    currently clocked in, and anyone scheduled right now who is neither.
 
-3. **Tokens** — what each girl earned, typed in after the stream. Tap a name,
+3. **Tokens** — what each girl earned, typed in after the stream, shown in
+   dollars with the token count underneath. One token is five cents; change
+   `TOKEN_RATE_USD` if that ever moves. Tap a name,
    tap Tonight or Last night, type the number, save. The amount is usually
    pasted rather than typed, so `4,820`, `4820 tk` and `4 820` all read as
    4820. Every entry carries the name of whoever logged it, and is one tap to
@@ -51,12 +57,39 @@ Tonight's logged tokens show against each live model on the board. Until
 Chaturbate is connected those hand-entered numbers are the only real ones, so
 they take precedence over the feed's own count.
 
+## Signing in
+
+Nobody is ever handed a password. The owner opens **Team**, taps *Create setup
+link* next to a person, and sends them the link. They open it once, choose
+their own username and password, and are signed in from that moment. The link
+works exactly once and expires after 14 days.
+
+Sessions last a year, so a phone stays signed in between shifts. Signing out
+is in the header if someone needs it.
+
+Add new creators from the same Team page — no seed script, no redeploy.
+
+## Who sees what
+
+A creator sees **only herself**, everywhere: her own calendar, her own hours,
+her own tokens. No other creator's name appears anywhere in her app, and the
+Team page is closed to her. This is enforced in the queries, not by hiding
+things in the interface.
+
+The owner and the team see everyone, because logging tokens requires it.
+
 ## Branding
 
-The peach and the "Peachy" wordmark are drawn as SVG in `components/Logo.tsx`
-so they stay sharp at any size and recolour with the theme. They also supply
-the browser tab icon (`app/icon.svg`), the iOS home-screen icon
-(`app/apple-icon.tsx`) and the PWA manifest (`app/manifest.ts`).
+**To use the real logo, put the artwork at `public/logo.png`** (or `.svg`,
+`.webp`, `.jpg`). Every place the brand appears picks it up automatically —
+the header, the login screen, the welcome screen and the setup page. Nothing
+else to change.
+
+Until that file exists, a drawn stand-in is used: a peach and a "Peachy"
+wordmark as SVG in `components/Logo.tsx`. The same drawing supplies the
+browser tab icon (`app/icon.svg`), the iOS home-screen icon
+(`app/apple-icon.tsx`) and the PWA manifest (`app/manifest.ts`) — those three
+still need replacing by hand once the real artwork is in.
 
 Brand colours are sampled by eye from the logo artwork and live at the top of
 `app/globals.css`. If there are official hex values, those few lines are the
@@ -68,9 +101,8 @@ app clears 4.5:1 in both light and dark mode.
 ## Roster
 
 Creators go by first name throughout: **Chelsea**, **Amelia**, **Brooks** and
-**Tessa**, plus employee accounts for the VAs and stream managers. Edit
-`prisma/seed.ts` and re-run `npm run seed` to add the remaining creators or
-change anyone's colour.
+**Tessa**, plus employee accounts for the VAs and stream managers. Add anyone
+else from the Team page.
 
 ## Setup
 
@@ -82,8 +114,8 @@ npm run seed              # creates accounts, prints one-time passwords
 npm run dev
 ```
 
-`npm run seed` prints a password for each account once. Save them, hand each
-person theirs, and they can change it after signing in.
+`npm run seed` creates the roster and prints the owner's password once. Save
+it. Everyone else gets a setup link from the Team page.
 
 ### Environment
 
@@ -94,6 +126,7 @@ person theirs, and they can change it after signing in.
 | `APP_TIMEZONE` | The one timezone all times are shown in. Default `America/New_York`. |
 | `PRESENCE_PROVIDER` | `mock` for development, `chaturbate` for real data. |
 | `CRON_SECRET` | Shared secret the scheduler sends to `POST /api/cron/poll`. |
+| `TOKEN_RATE_USD` | Dollars per token. Defaults to `0.05`. |
 
 Generate a secret with `openssl rand -base64 32`.
 

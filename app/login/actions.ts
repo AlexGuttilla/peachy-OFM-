@@ -19,8 +19,8 @@ export async function login(
 
   const user = await db.user.findUnique({ where: { username } });
 
-  // Same message either way — a wrong username should not be distinguishable
-  // from a wrong password.
+  // Same message either way — a wrong username, an account that has not
+  // finished setup, and a wrong password are all indistinguishable.
   if (!user || !user.active || !(await verifyPassword(password, user.passwordHash))) {
     return { error: "That username and password do not match." };
   }

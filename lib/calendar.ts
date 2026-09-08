@@ -1,5 +1,5 @@
 import { formatInTimeZone } from "date-fns-tz";
-import { TZ, clockTime, dayKey } from "@/lib/time";
+import { TZ, clockTime, dayKey, duration } from "@/lib/time";
 
 export type ShiftView = {
   id: string;
@@ -13,6 +13,22 @@ export type ShiftView = {
   crossesMidnight: boolean;
   note: string | null;
   canEdit: boolean;
+};
+
+/** A stretch actually worked, as opposed to one that was promised. */
+export type SessionView = {
+  id: string;
+  userId: string;
+  displayName: string;
+  color: string;
+  startLabel: string;
+  endLabel: string | null;
+  startDay: string;
+  endDay: string;
+  crossesMidnight: boolean;
+  lengthLabel: string;
+  open: boolean;
+  source: string;
 };
 
 export type DayCell = {
@@ -150,16 +166,53 @@ export function toShiftView(
   };
 }
 
-/** A shift appears on its start day and on every day it runs into. */
-export function shiftsByDay(shifts: ShiftView[]): Map<string, ShiftView[]> {
-  const map = new Map<string, ShiftView[]>();
-  for (const shift of shifts) {
-    for (const key of [shift.startDay, shift.endDay]) {
+export function toSessionView(
+  session: {
+    id: string;
+    userId: string;
+    startedAt: Date;
+    endedAt: Date | null;
+    source: string;
+    user: { displayName: string; color: string };
+  },
+  now: Date,
+): SessionView {
+  const until = session.endedAt ?? now;
+  const startDay = dayKey(session.startedAt);
+  const endDay = dayKey(until);
+  return {
+    id: session.id,
+    userId: session.userId,
+    displayName: session.user.displayName,
+    color: session.user.color,
+    startLabel: clockTime(session.startedAt),
+    endLabel: session.endedAt ? clockTime(session.endedAt) : null,
+    startDay,
+    endDay,
+    crossesMidnight: startDay !== endDay,
+    lengthLabel: duration(session.startedAt, until),
+    open: session.endedAt === null,
+    source: session.source,
+  };
+}
+
+/** A shift or session appears on its start day and every day it runs into. */
+export function byDay<T extends { id: string; startDay: string; endDay: string }>(
+  items: T[],
+): Map<string, T[]> {
+  const map = new Map<string, T[]>();
+  for (const item of items) {
+    for (const key of [item.startDay, item.endDay]) {
       const list = map.get(key) ?? [];
-      if (!list.some((s) => s.id === shift.id)) list.push(shift);
+      if (!list.some((existing) => existing.id === item.id)) list.push(item);
       map.set(key, list);
     }
   }
+  return map;
+}
+
+export function shiftsByDay(shifts: ShiftView[]): Map<string, ShiftView[]> {
+  const map = byDay(shifts);
   for (const list of map.values()) {
     list.sort((a, b) => a.startLabel.localeCompare(b.startLabel));
   }
