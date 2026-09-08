@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #fdf8f6;
+  --surface: #ffffff;
+  --border: #ecdfd9;
+  --text: #2b1d1a;
+  --muted: #8a7269;
+  --accent: #e8607d;
+  --accent-soft: #fde8ed;
+  --live: #16a34a;
+  --live-soft: #dcfce7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16100f;
+    --surface: #201817;
+    --border: #362a28;
+    --text: #f6ecea;
+    --muted: #a89490;
+    --accent: #f2718c;
+    --accent-soft: #3a1f27;
+    --live: #4ade80;
+    --live-soft: #14321f;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-line: var(--border);
+  --color-ink: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-live: var(--live);
+  --color-live-soft: var(--live-soft);
+  --font-sans: var(--font-geist-sans);
+}
+
+html {
+  background: var(--bg);
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Respect the iPhone home indicator under the bottom nav. */
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem);
+}

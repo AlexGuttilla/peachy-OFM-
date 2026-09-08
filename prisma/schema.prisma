@@ -1,0 +1,92 @@
+// Peachy OFM — internal ops app
+// Dev uses SQLite. To move to Postgres: change provider to "postgresql",
+// point DATABASE_URL at the Postgres instance, and re-run migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Everyone who logs in: the owner, the models, the employees (VAs / stream managers).
+model User {
+  id           String  @id @default(cuid())
+  username     String  @unique
+  passwordHash String
+  displayName  String
+  /// OWNER | MODEL | EMPLOYEE
+  role         String
+  /// Hex colour used to identify this person on the calendar.
+  color        String  @default("#f472b6")
+  active       Boolean @default(true)
+
+  /// Chaturbate room name, models only.
+  chaturbateUsername String?
+  /// Full Events API URL the model generates in her Chaturbate account settings.
+  /// Stored encrypted at rest — see lib/crypto.ts.
+  chaturbateEventsUrl String?
+  /// Events API pagination cursor, so each poll only sees new events.
+  chaturbateCursor    String?
+
+  createdAt DateTime @default(now())
+
+  shifts   Shift[]
+  sessions WorkSession[]
+  events   Event[]
+}
+
+/// A shift somebody has committed to in advance. May cross midnight.
+model Shift {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startsAt DateTime
+  endsAt   DateTime
+  note     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([startsAt])
+  @@index([userId, startsAt])
+}
+
+/// Time actually worked. Opened when someone goes live / clocks in,
+/// closed when they go offline for good / clock out.
+model WorkSession {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  startedAt DateTime
+  /// Null while the session is still open.
+  endedAt   DateTime?
+  /// Last moment we had positive evidence this person was working.
+  /// A session that goes quiet is closed at THIS time, not at the time we noticed.
+  lastSeenAt DateTime
+
+  /// CHATURBATE (detected automatically) | MANUAL (clock-in button)
+  source String
+  tokens Int    @default(0)
+
+  @@index([userId, startedAt])
+  @@index([endedAt])
+}
+
+/// Feed of things worth knowing about, shown on the live board.
+model Event {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  /// WENT_LIVE | SHIFT_ENDED | CLOCKED_IN | CLOCKED_OUT | MISSED_SHIFT
+  type      String
+  message   String
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  @@index([createdAt])
+}
