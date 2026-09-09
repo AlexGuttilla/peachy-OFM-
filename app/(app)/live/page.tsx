@@ -69,19 +69,22 @@ export default async function LivePage() {
         {isCreator ? "Your shift" : "On right now"}
       </ScreenTitle>
 
-      <form action={myOpen ? clockOut : clockIn}>
-        <button
-          type="submit"
-          disabled={autoClocked}
-          className={myOpen ? BUTTON_QUIET : BUTTON}
-        >
-          {!myOpen
-            ? "Clock in"
-            : autoClocked
-              ? `Live since ${clockTime(myOpen.startedAt)}`
-              : `Clock out · in since ${clockTime(myOpen.startedAt)}`}
-        </button>
-      </form>
+      {/* The owner runs the board, she does not work a shift on it. */}
+      {viewer.role === "OWNER" ? null : (
+        <form action={myOpen ? clockOut : clockIn}>
+          <button
+            type="submit"
+            disabled={autoClocked}
+            className={myOpen ? BUTTON_QUIET : BUTTON}
+          >
+            {!myOpen
+              ? "Clock in"
+              : autoClocked
+                ? `Live since ${clockTime(myOpen.startedAt)}`
+                : `Clock out · in since ${clockTime(myOpen.startedAt)}`}
+          </button>
+        </form>
+      )}
 
       {models.length > 0 ? (
         <section className="flex flex-col gap-3">
