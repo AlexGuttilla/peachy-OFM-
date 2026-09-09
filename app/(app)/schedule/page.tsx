@@ -13,6 +13,7 @@ import {
   toShiftView,
 } from "@/lib/calendar";
 import { todayKey } from "@/lib/time";
+import { Avatar, ScreenTitle } from "@/components/ui";
 import CalendarBoard from "./CalendarBoard";
 
 export const dynamic = "force-dynamic";
@@ -72,22 +73,20 @@ export default async function SchedulePage({
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">
-          {monthLabel(year, month)}
-        </h1>
-        <div className="flex gap-1">
+      <div className="flex items-center justify-between gap-3">
+        <ScreenTitle>{monthLabel(year, month)}</ScreenTitle>
+        <div className="flex shrink-0 gap-1.5">
           <Link
             href={`/schedule?month=${shiftMonth(year, month, -1)}`}
             aria-label="Previous month"
-            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm"
+            className="grid size-10 place-items-center rounded-full bg-surface text-lg"
           >
             ‹
           </Link>
           <Link
             href={`/schedule?month=${shiftMonth(year, month, 1)}`}
             aria-label="Next month"
-            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm"
+            className="grid size-10 place-items-center rounded-full bg-surface text-lg"
           >
             ›
           </Link>
@@ -101,18 +100,16 @@ export default async function SchedulePage({
         today={todayKey()}
       />
 
-      <div className="mt-6 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted">
-        {(isCreator ? [] : roster).map((person) => (
-          <span key={person.id} className="flex items-center gap-1.5">
-            <span
-              aria-hidden
-              className="size-2.5 rounded-full"
-              style={{ background: person.color }}
-            />
-            {person.displayName}
-          </span>
-        ))}
-      </div>
+      {isCreator ? null : (
+        <div className="mt-7 flex flex-wrap gap-x-4 gap-y-3 text-sm text-muted">
+          {roster.map((person) => (
+            <span key={person.id} className="flex items-center gap-2">
+              <Avatar name={person.displayName} color={person.color} size="sm" />
+              {person.displayName}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -15,15 +15,16 @@ const ROSTER: Array<{
 }> = [
   { username: "owner", displayName: "Owner", role: "OWNER", color: "#3b2113" },
 
-  // Creators go by first name everywhere in the app.
-  // Colours are picked to stay apart from each other and from the orange UI.
-  { username: "chelsea", displayName: "Chelsea", role: "MODEL", color: "#d94f70", chaturbateUsername: "chelsea" },
-  { username: "amelia", displayName: "Amelia", role: "MODEL", color: "#c98a1b", chaturbateUsername: "amelia" },
-  { username: "brooks", displayName: "Brooks", role: "MODEL", color: "#3f8a44", chaturbateUsername: "brooks" },
-  { username: "tessa", displayName: "Tessa", role: "MODEL", color: "#8b5cc7", chaturbateUsername: "tessa" },
+  // Creators go by first name everywhere in the app. Colours stay apart from
+  // each other and from the orange UI, and are dark enough to carry a white
+  // initial in the avatar circles.
+  { username: "chelsea", displayName: "Chelsea", role: "MODEL", color: "#c2405f", chaturbateUsername: "chelsea" },
+  { username: "amelia", displayName: "Amelia", role: "MODEL", color: "#96690e", chaturbateUsername: "amelia" },
+  { username: "brooks", displayName: "Brooks", role: "MODEL", color: "#357439", chaturbateUsername: "brooks" },
+  { username: "tessa", displayName: "Tessa", role: "MODEL", color: "#7448b0", chaturbateUsername: "tessa" },
 
-  { username: "va1", displayName: "VA 1", role: "EMPLOYEE", color: "#7a8b99" },
-  { username: "manager1", displayName: "Stream Manager 1", role: "EMPLOYEE", color: "#5a6b7a" },
+  { username: "va1", displayName: "VA 1", role: "EMPLOYEE", color: "#5f7080" },
+  { username: "manager1", displayName: "Stream Manager 1", role: "EMPLOYEE", color: "#7a6455" },
 ];
 
 function tempPassword(): string {

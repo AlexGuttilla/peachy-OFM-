@@ -57,14 +57,27 @@ async function main() {
     ],
   });
 
-  await db.event.createMany({
-    data: [
-      { userId: va.id, type: "CLOCKED_IN", message: "VA 1 clocked in at 3:55 AM" },
-      { userId: m1.id, type: "WENT_LIVE", message: "Model 1 went live at 5:07 AM" },
-      { userId: mgr.id, type: "CLOCKED_IN", message: "Stream Manager 1 clocked in at 6:25 AM" },
-      { userId: m3.id, type: "WENT_LIVE", message: "Model 3 went live at 6:51 AM" },
-    ],
-  });
+  // Events carry the time they happened, so the feed's timestamps line up
+  // with the sentences next to them.
+  const clockLabel = (d: Date) =>
+    d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+
+  for (const entry of [
+    { user: va,  mins: 217, type: "CLOCKED_IN", verb: "clocked in" },
+    { user: m1,  mins: 143, type: "WENT_LIVE",  verb: "went live" },
+    { user: mgr, mins: 66,  type: "CLOCKED_IN", verb: "clocked in" },
+    { user: m3,  mins: 41,  type: "WENT_LIVE",  verb: "went live" },
+  ]) {
+    const at = ago(entry.mins);
+    await db.event.create({
+      data: {
+        userId: entry.user.id,
+        type: entry.type,
+        message: `${entry.user.displayName} ${entry.verb} at ${clockLabel(at)}`,
+        createdAt: at,
+      },
+    });
+  }
 
   // A few nights of tokens, the way the stream manager would have typed them.
   const day = (back: number) => {

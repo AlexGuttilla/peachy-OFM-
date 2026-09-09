@@ -1,6 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { localToUtc, clockTime, dayKey } from "../lib/time";
-import { toShiftView, shiftsByDay, buildGrid, gridRange } from "../lib/calendar";
+import {
+  toShiftView,
+  toSessionView,
+  shiftsByDay,
+  buildGrid,
+  gridRange,
+} from "../lib/calendar";
 
 const db = new PrismaClient();
 let failures = 0;
@@ -69,6 +75,39 @@ async function main() {
   const feb = buildGrid(2027, 2);
   check("28 days", feb.filter((c) => c.inMonth).length === 28);
   check("whole weeks only", feb.length % 7 === 0, String(feb.length));
+
+  console.log("\nA session still running is described by when it started");
+  const openView = toSessionView(
+    {
+      id: "open",
+      userId: model.id,
+      startedAt: localToUtc("2026-09-09", "21:42"),
+      endedAt: null,
+      source: "CHATURBATE",
+      user: { displayName: "Test Model", color: "#000000" },
+    },
+    // "Now" is past midnight — this is what used to render "now next day".
+    localToUtc("2026-09-10", "00:04"),
+  );
+  check("no end label while open", openView.endLabel === null);
+  check("flagged open", openView.open);
+  check("measured to now", openView.lengthLabel === "2h 22m", openView.lengthLabel);
+
+  console.log("\nA finished overnight session keeps both ends");
+  const closedView = toSessionView(
+    {
+      id: "closed",
+      userId: model.id,
+      startedAt: localToUtc("2026-09-09", "21:32"),
+      endedAt: localToUtc("2026-09-10", "04:07"),
+      source: "CHATURBATE",
+      user: { displayName: "Test Model", color: "#000000" },
+    },
+    new Date(),
+  );
+  check("end label kept", closedView.endLabel === "4:07 AM", String(closedView.endLabel));
+  check("crosses midnight", closedView.crossesMidnight);
+  check("length spans midnight", closedView.lengthLabel === "6h 35m", closedView.lengthLabel);
 
   await db.user.delete({ where: { id: model.id } });
   console.log(failures === 0 ? "\nAll calendar checks passed.\n" : `\n${failures} FAILED\n`);

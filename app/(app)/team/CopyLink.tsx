@@ -19,13 +19,13 @@ export default function CopyLink({ url }: { url: string }) {
 
   return (
     <div className="flex items-center gap-2">
-      <code className="min-w-0 flex-1 truncate rounded-lg bg-accent-soft px-2.5 py-2 text-xs">
+      <code className="min-w-0 flex-1 truncate rounded-xl bg-accent-soft px-3 py-2.5 text-sm">
         {url}
       </code>
       <button
         type="button"
         onClick={copy}
-        className="shrink-0 rounded-lg border border-line px-3 py-2 text-xs font-medium"
+        className="shrink-0 rounded-full border border-line px-4 py-2.5 text-sm font-medium"
       >
         {copied ? "Copied" : "Copy"}
       </button>

@@ -10,10 +10,13 @@ export type TeamState = { error?: string; ok?: string };
 const NAME_MAX = 40;
 const ROLES = ["MODEL", "EMPLOYEE"] as const;
 
-/** Distinct on the calendar, and clear of the orange the interface uses. */
+/**
+ * Distinct from each other and from the orange interface, and dark enough to
+ * carry a white initial in an avatar circle.
+ */
 const PALETTE = [
-  "#d94f70", "#c98a1b", "#3f8a44", "#8b5cc7",
-  "#2f7f8f", "#b3436e", "#6b8f2f", "#7a5cc7",
+  "#c2405f", "#96690e", "#357439", "#7448b0",
+  "#256b78", "#9c3468", "#5c7a1f", "#5f7080",
 ];
 
 export async function addPerson(

@@ -11,13 +11,13 @@ export default async function WelcomePage() {
     <div className="flex min-h-[70vh] flex-col items-center justify-center text-center">
       <BrandLogo className="w-64" />
 
-      <p className="mt-2 text-sm text-muted">
+      <p className="mt-3 text-lg text-muted">
         Hi {user.displayName.split(" ")[0]}
       </p>
 
       <Link
         href="/home"
-        className="mt-10 w-full max-w-xs rounded-xl bg-accent-strong px-4 py-3.5 text-base font-medium text-on-accent"
+        className="mt-12 w-full max-w-xs rounded-2xl bg-accent-strong px-5 py-4 text-center text-base font-medium text-on-accent"
       >
         Next
       </Link>

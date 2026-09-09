@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { todayKey, fmt } from "@/lib/time";
-import { formatTokens, formatUsd, tokensToUsd } from "@/lib/tokens";
+import { TOKEN_RATE_USD, formatTokens, formatUsd, tokensToUsd } from "@/lib/tokens";
+import { Avatar, MoneyPair, ScreenTitle, SectionTitle } from "@/components/ui";
 import { deleteTokenEntry } from "./actions";
 import TokenForm from "./TokenForm";
 
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 const WINDOW_DAYS = 7;
 
-/** "2026-09-09" -> "Tue 9 Sep" */
+/** "Tue 9 Sep" */
 function shortDate(key: string): string {
   const [y, m, d] = key.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString("en-US", {
@@ -22,10 +23,9 @@ function shortDate(key: string): string {
 
 function daysBack(from: string, count: number): string[] {
   const [y, m, d] = from.split("-").map(Number);
-  return Array.from({ length: count }, (_, i) => {
-    const date = new Date(Date.UTC(y, m - 1, d - i));
-    return fmt(date, "yyyy-MM-dd");
-  });
+  return Array.from({ length: count }, (_, i) =>
+    fmt(new Date(Date.UTC(y, m - 1, d - i)), "yyyy-MM-dd"),
+  );
 }
 
 export default async function TokensPage() {
@@ -62,7 +62,6 @@ export default async function TokensPage() {
     byDate.set(entry.streamDate, [...(byDate.get(entry.streamDate) ?? []), entry]);
   }
 
-  // Per-model totals across the window, biggest earner first.
   const perModel = new Map<string, { name: string; color: string; total: number }>();
   for (const entry of entries) {
     const row = perModel.get(entry.userId) ?? {
@@ -76,117 +75,109 @@ export default async function TokensPage() {
   const leaderboard = [...perModel.values()].sort((a, b) => b.total - a.total);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">Tokens</h1>
-        <p className="text-xs text-muted">last {WINDOW_DAYS} days</p>
+    <div className="flex flex-col gap-7">
+      <ScreenTitle aside="last 7 days">Tokens</ScreenTitle>
+
+      <div className="rounded-3xl bg-accent-soft px-5 py-5">
+        <p className="text-sm text-muted">
+          {canRecord ? "Everyone this week" : "You this week"}
+        </p>
+        <div className="mt-1">
+          <MoneyPair
+            size="lg"
+            money={formatUsd(tokensToUsd(weekTotal))}
+            tokens={formatTokens(weekTotal)}
+          />
+        </div>
       </div>
 
-      <div className="rounded-2xl border border-line bg-accent-soft px-4 py-3.5">
-        <p className="text-xs text-muted">Total this week</p>
-        <p className="mt-0.5 text-3xl font-semibold tabular-nums">
-          {formatUsd(tokensToUsd(weekTotal))}
-        </p>
-        <p className="mt-0.5 text-sm text-muted tabular-nums">
-          {formatTokens(weekTotal)}
-        </p>
-      </div>
+      {canRecord ? (
+        <TokenForm models={models} today={today} rate={TOKEN_RATE_USD} />
+      ) : null}
 
-      {canRecord ? <TokenForm models={models} today={today} /> : null}
-
-      {leaderboard.length > 0 ? (
-        <section>
-          <h2 className="text-sm font-semibold">By model</h2>
-          <ul className="mt-2 space-y-2">
+      {leaderboard.length > 0 && canRecord ? (
+        <section className="flex flex-col gap-3">
+          <SectionTitle>By creator</SectionTitle>
+          <ul className="flex flex-col gap-2">
             {leaderboard.map((row) => (
               <li
                 key={row.name}
-                className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5"
+                className="flex items-center gap-3 rounded-2xl bg-surface px-3.5 py-3"
               >
-                <span
-                  aria-hidden
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{ background: row.color }}
+                <Avatar name={row.name} color={row.color} />
+                <span className="min-w-0 flex-1 truncate font-medium">{row.name}</span>
+                <MoneyPair
+                  money={formatUsd(tokensToUsd(row.total))}
+                  tokens={formatTokens(row.total)}
                 />
-                <span className="flex-1 truncate text-sm font-medium">{row.name}</span>
-                <span className="shrink-0 text-right">
-                  <span className="block text-sm font-medium tabular-nums">
-                    {formatUsd(tokensToUsd(row.total))}
-                  </span>
-                  <span className="block text-xs text-muted tabular-nums">
-                    {formatTokens(row.total)}
-                  </span>
-                </span>
               </li>
             ))}
           </ul>
         </section>
       ) : null}
 
-      <section>
-        <h2 className="text-sm font-semibold">Night by night</h2>
+      <section className="flex flex-col gap-4">
+        <SectionTitle>Recent nights</SectionTitle>
+
         {entries.length === 0 ? (
-          <p className="mt-2 text-sm text-muted">
-            Nothing logged in the last {WINDOW_DAYS} days.
-          </p>
+          <p className="text-muted">Nothing logged in the last {WINDOW_DAYS} days.</p>
         ) : (
-          <div className="mt-2 space-y-4">
-            {[...byDate.entries()].map(([date, rows]) => (
-              <div key={date}>
-                <div className="flex items-baseline justify-between">
-                  <h3 className="text-xs font-medium text-muted">
-                    {date === today ? "Tonight" : shortDate(date)}
-                  </h3>
-                  <span className="text-xs tabular-nums text-muted">
-                    {formatUsd(tokensToUsd(rows.reduce((sum, r) => sum + r.tokens, 0)))}
-                  </span>
-                </div>
-                <ul className="mt-1.5 space-y-1.5">
-                  {rows.map((entry) => (
-                    <li
-                      key={entry.id}
-                      className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5"
-                    >
-                      <span
-                        aria-hidden
-                        className="size-2.5 shrink-0 rounded-full"
-                        style={{ background: entry.user.color }}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
+          [...byDate.entries()].map(([date, rows]) => (
+            <div key={date} className="flex flex-col gap-2">
+              <div className="flex items-baseline justify-between">
+                <h3 className="text-sm font-medium">
+                  {date === today ? "Tonight" : shortDate(date)}
+                </h3>
+                <span className="text-sm tabular-nums text-muted">
+                  {formatUsd(tokensToUsd(rows.reduce((sum, r) => sum + r.tokens, 0)))}
+                </span>
+              </div>
+
+              <ul className="flex flex-col gap-2">
+                {rows.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="flex gap-3 rounded-2xl bg-surface px-3.5 py-3"
+                  >
+                    <Avatar name={entry.user.displayName} color={entry.user.color} />
+
+                    {/* Both figures stack on the right of the first line, so
+                        the second line is the note's alone and never clipped. */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="min-w-0 flex-1 truncate pt-0.5 font-medium">
                           {entry.user.displayName}
                         </p>
-                        <p className="truncate text-xs text-muted">
-                          by {entry.recordedBy.displayName}
+                        <MoneyPair
+                          money={formatUsd(tokensToUsd(entry.tokens))}
+                          tokens={formatTokens(entry.tokens)}
+                        />
+                      </div>
+
+                      <div className="mt-1 flex items-baseline justify-between gap-3 text-sm text-muted">
+                        <p className="min-w-0 flex-1 truncate">
+                          {entry.recordedBy.displayName}
                           {entry.note ? ` · ${entry.note}` : ""}
                         </p>
+                        {canRecord ? (
+                          <form action={deleteTokenEntry} className="shrink-0">
+                            <input type="hidden" name="entryId" value={entry.id} />
+                            <button
+                              type="submit"
+                              aria-label={`Remove ${entry.tokens} tokens for ${entry.user.displayName}`}
+                              className="text-accent-strong underline underline-offset-4"
+                            >
+                              Undo
+                            </button>
+                          </form>
+                        ) : null}
                       </div>
-                      <span className="shrink-0 text-right">
-                        <span className="block text-sm font-medium tabular-nums">
-                          {formatUsd(tokensToUsd(entry.tokens))}
-                        </span>
-                        <span className="block text-xs text-muted tabular-nums">
-                          {formatTokens(entry.tokens)}
-                        </span>
-                      </span>
-                      {canRecord ? (
-                        <form action={deleteTokenEntry}>
-                          <input type="hidden" name="entryId" value={entry.id} />
-                          <button
-                            type="submit"
-                            aria-label={`Remove ${entry.tokens} tokens for ${entry.user.displayName}`}
-                            className="shrink-0 text-xs text-accent-strong underline underline-offset-4"
-                          >
-                            Undo
-                          </button>
-                        </form>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
         )}
       </section>
     </div>

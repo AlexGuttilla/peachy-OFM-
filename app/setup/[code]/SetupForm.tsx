@@ -1,12 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
+import { BUTTON, FIELD } from "@/components/ui";
 import { completeSetup, type SetupState } from "./actions";
 
 const initial: SetupState = {};
 
-const FIELD =
-  "mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-base outline-none focus:border-accent";
+const INPUT = `${FIELD} mt-2`;
 
 export default function SetupForm({ code }: { code: string }) {
   const [state, action, pending] = useActionState(completeSetup, initial);
@@ -16,7 +16,7 @@ export default function SetupForm({ code }: { code: string }) {
       <input type="hidden" name="code" value={code} />
 
       <div>
-        <label htmlFor="username" className="block text-sm font-medium">
+        <label htmlFor="username" className="block font-medium">
           Choose a username
         </label>
         <input
@@ -26,12 +26,12 @@ export default function SetupForm({ code }: { code: string }) {
           autoCapitalize="none"
           autoCorrect="off"
           autoComplete="username"
-          className={FIELD}
+          className={INPUT}
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium">
+        <label htmlFor="password" className="block font-medium">
           Choose a password
         </label>
         <input
@@ -41,13 +41,13 @@ export default function SetupForm({ code }: { code: string }) {
           required
           minLength={8}
           autoComplete="new-password"
-          className={FIELD}
+          className={INPUT}
         />
-        <p className="mt-1 text-xs text-muted">At least 8 characters.</p>
+        <p className="mt-1.5 text-sm text-muted">At least 8 characters.</p>
       </div>
 
       <div>
-        <label htmlFor="confirm" className="block text-sm font-medium">
+        <label htmlFor="confirm" className="block font-medium">
           Type it again
         </label>
         <input
@@ -56,21 +56,17 @@ export default function SetupForm({ code }: { code: string }) {
           type="password"
           required
           autoComplete="new-password"
-          className={FIELD}
+          className={INPUT}
         />
       </div>
 
       {state.error ? (
-        <p role="alert" className="text-sm text-accent-strong">
+        <p role="alert" className="text-accent-strong">
           {state.error}
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-xl bg-accent-strong px-4 py-3 text-base font-medium text-on-accent disabled:opacity-60"
-      >
+      <button type="submit" disabled={pending} className={BUTTON}>
         {pending ? "Setting up…" : "Create my account"}
       </button>
     </form>

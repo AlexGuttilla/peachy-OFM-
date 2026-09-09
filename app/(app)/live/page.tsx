@@ -2,6 +2,14 @@ import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { clockTime, duration, dayKey } from "@/lib/time";
 import { formatTokens, formatUsd, tokensToUsd } from "@/lib/tokens";
+import {
+  MoneyPair,
+  PersonRow,
+  ScreenTitle,
+  SectionTitle,
+  BUTTON,
+  BUTTON_QUIET,
+} from "@/components/ui";
 import { clockIn, clockOut } from "./actions";
 import AutoRefresh from "./AutoRefresh";
 
@@ -33,7 +41,7 @@ export default async function LivePage() {
     db.event.findMany({
       where: { createdAt: { gte: since }, ...onlyMine },
       orderBy: { createdAt: "desc" },
-      take: 15,
+      take: 8,
     }),
     db.tokenEntry.groupBy({
       by: ["userId"],
@@ -42,181 +50,127 @@ export default async function LivePage() {
     }),
   ]);
 
-  // Tokens logged by hand tonight. Until Chaturbate is connected these are the
-  // only real numbers, so they take precedence over the session's own count.
-  const loggedTonight = new Map(
-    tonight.map((row) => [row.userId, row._sum.tokens ?? 0]),
-  );
-
   const models = open.filter((s) => s.user.role === "MODEL");
   const staff = open.filter((s) => s.user.role !== "MODEL");
   const liveIds = new Set(open.map((s) => s.userId));
-
-  // Scheduled to be working right now, but nothing has clocked them in.
   const missing = scheduled.filter((shift) => !liveIds.has(shift.userId));
 
+  // Tokens logged by hand tonight. Until Chaturbate is connected these are the
+  // only real numbers, so they take precedence over the session's own count.
+  const loggedTonight = new Map(tonight.map((r) => [r.userId, r._sum.tokens ?? 0]));
+
+  const autoClocked = myOpen?.source === "CHATURBATE";
+
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-7">
       <AutoRefresh seconds={30} />
 
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">
-          {isCreator ? "Your hours" : "Who’s on now"}
-        </h1>
-        <p className="text-xs text-muted">{dayKey(now)} · {clockTime(now)}</p>
-      </div>
+      <ScreenTitle aside={clockTime(now)}>
+        {isCreator ? "Your shift" : "On right now"}
+      </ScreenTitle>
 
       <form action={myOpen ? clockOut : clockIn}>
         <button
           type="submit"
-          disabled={myOpen?.source === "CHATURBATE"}
-          className={`w-full rounded-xl px-4 py-3 text-sm font-medium disabled:opacity-60 ${
-            myOpen ? "border border-line" : "bg-accent-strong text-on-accent"
-          }`}
+          disabled={autoClocked}
+          className={myOpen ? BUTTON_QUIET : BUTTON}
         >
           {!myOpen
             ? "Clock in"
-            : myOpen.source === "CHATURBATE"
-              ? `Live since ${clockTime(myOpen.startedAt)} — clocked in automatically`
-              : `Clock out (in since ${clockTime(myOpen.startedAt)})`}
+            : autoClocked
+              ? `Live since ${clockTime(myOpen.startedAt)}`
+              : `Clock out · in since ${clockTime(myOpen.startedAt)}`}
         </button>
       </form>
 
-      <Section title={isCreator ? "You’re live" : "Models live"} count={models.length}>
-        {models.map((session) => (
-          <Row
-            key={session.id}
-            color={session.user.color}
-            name={session.user.displayName}
-            detail={`live ${duration(session.startedAt, now)} · since ${clockTime(session.startedAt)}`}
-            trailing={tokenLabel(loggedTonight.get(session.userId) ?? 0, session.tokens)}
-            live
-          />
-        ))}
-      </Section>
-
-      {isCreator ? null : (
-        <Section title="Team clocked in" count={staff.length}>
-          {staff.map((session) => (
-            <Row
-              key={session.id}
-              color={session.user.color}
-              name={session.user.displayName}
-              detail={`in ${duration(session.startedAt, now)} · since ${clockTime(session.startedAt)}`}
-            />
-          ))}
-        </Section>
-      )}
-
-      {missing.length > 0 ? (
-        <Section
-          title={isCreator ? "You’re scheduled now" : "Scheduled but not on"}
-          count={missing.length}
-        >
-          {missing.map((shift) => (
-            <Row
-              key={shift.id}
-              color={shift.user.color}
-              name={shift.user.displayName}
-              detail={`booked ${clockTime(shift.startsAt)} – ${clockTime(shift.endsAt)}`}
-              muted
-            />
-          ))}
-        </Section>
+      {models.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <SectionTitle>{isCreator ? "You're live" : "Streaming now"}</SectionTitle>
+          <ul className="flex flex-col gap-2">
+            {models.map((session) => {
+              const tokens =
+                loggedTonight.get(session.userId) || session.tokens || 0;
+              return (
+                <PersonRow
+                  key={session.id}
+                  name={session.user.displayName}
+                  color={session.user.color}
+                  tone="live"
+                  badge={
+                    <span className="ml-2 text-sm font-normal text-live">live</span>
+                  }
+                  detail={`${duration(session.startedAt, now)} · since ${clockTime(session.startedAt)}`}
+                  trailing={
+                    tokens > 0 ? (
+                      <MoneyPair
+                        money={formatUsd(tokensToUsd(tokens))}
+                        tokens={formatTokens(tokens)}
+                      />
+                    ) : undefined
+                  }
+                />
+              );
+            })}
+          </ul>
+        </section>
       ) : null}
 
-      <section>
-        <h2 className="text-sm font-semibold">
-          {isCreator ? "Your recent activity" : "Recent activity"}
-        </h2>
-        {events.length === 0 ? (
-          <p className="mt-2 text-sm text-muted">Nothing in the last 24 hours.</p>
-        ) : (
-          <ul className="mt-2 space-y-1.5">
+      {!isCreator && staff.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <SectionTitle>Team on shift</SectionTitle>
+          <ul className="flex flex-col gap-2">
+            {staff.map((session) => (
+              <PersonRow
+                key={session.id}
+                name={session.user.displayName}
+                color={session.user.color}
+                detail={`${duration(session.startedAt, now)} · since ${clockTime(session.startedAt)}`}
+              />
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {missing.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <SectionTitle>
+            {isCreator ? "You're booked now" : "Booked but not on yet"}
+          </SectionTitle>
+          <ul className="flex flex-col gap-2">
+            {missing.map((shift) => (
+              <PersonRow
+                key={shift.id}
+                name={shift.user.displayName}
+                color={shift.user.color}
+                tone="quiet"
+                detail={`${clockTime(shift.startsAt)} – ${clockTime(shift.endsAt)}`}
+              />
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {models.length === 0 && staff.length === 0 && missing.length === 0 ? (
+        <p className="text-muted">
+          {isCreator ? "You're not clocked in." : "Nobody is on right now."}
+        </p>
+      ) : null}
+
+      {events.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <SectionTitle>Earlier today</SectionTitle>
+          <ul className="flex flex-col gap-2.5">
             {events.map((event) => (
-              <li key={event.id} className="flex gap-2 text-sm">
-                <span className="shrink-0 tabular-nums text-muted">
+              <li key={event.id} className="flex gap-3 text-sm">
+                <span className="w-16 shrink-0 tabular-nums text-muted">
                   {clockTime(event.createdAt)}
                 </span>
-                <span className="text-ink">{event.message}</span>
+                <span>{event.message}</span>
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </section>
+      ) : null}
     </div>
-  );
-}
-
-/** Prefer what a person logged tonight; fall back to the live feed's count. */
-function tokenLabel(logged: number, fromFeed: number): React.ReactNode {
-  const tokens = logged > 0 ? logged : fromFeed;
-  if (tokens <= 0) return undefined;
-  return (
-    <span className="block text-right">
-      <span className="block text-sm font-medium tabular-nums">
-        {formatUsd(tokensToUsd(tokens))}
-      </span>
-      <span className="block text-xs text-muted tabular-nums">
-        {formatTokens(tokens)}
-      </span>
-    </span>
-  );
-}
-
-function Section({
-  title,
-  count,
-  children,
-}: {
-  title: string;
-  count: number;
-  children: React.ReactNode;
-}) {
-  return (
-    <section>
-      <h2 className="text-sm font-semibold">
-        {title} <span className="font-normal text-muted">({count})</span>
-      </h2>
-      {count === 0 ? (
-        <p className="mt-2 text-sm text-muted">Nobody right now.</p>
-      ) : (
-        <ul className="mt-2 space-y-2">{children}</ul>
-      )}
-    </section>
-  );
-}
-
-function Row({
-  color,
-  name,
-  detail,
-  trailing,
-  live,
-  muted,
-}: {
-  color: string;
-  name: string;
-  detail: string;
-  trailing?: React.ReactNode;
-  live?: boolean;
-  muted?: boolean;
-}) {
-  return (
-    <li
-      className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${
-        live ? "border-live-line bg-live-soft" : "border-line"
-      } ${muted ? "opacity-70" : ""}`}
-    >
-      <span aria-hidden className="size-2.5 shrink-0 rounded-full" style={{ background: color }} />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">
-          {name}
-          {live ? <span className="ml-2 text-xs font-normal text-live">● live</span> : null}
-        </p>
-        <p className="text-xs text-muted">{detail}</p>
-      </div>
-      {trailing ? <span className="shrink-0">{trailing}</span> : null}
-    </li>
   );
 }

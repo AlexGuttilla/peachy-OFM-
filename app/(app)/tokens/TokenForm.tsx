@@ -1,11 +1,17 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { Avatar, BUTTON, FIELD } from "@/components/ui";
+import { parseTokenAmount } from "@/lib/tokens";
 import { recordTokens, type TokenFormState } from "./actions";
 
 type Model = { id: string; displayName: string; color: string };
 
 const initial: TokenFormState = {};
+
+const CHIP = "flex items-center gap-2 rounded-full px-3.5 py-2 text-base";
+const CHIP_ON = "bg-accent-soft font-medium text-ink";
+const CHIP_OFF = "bg-surface text-muted";
 
 /** "2026-09-09" shifted by whole days, without leaving the string domain. */
 function shiftDay(key: string, delta: number): string {
@@ -21,13 +27,16 @@ function shiftDay(key: string, delta: number): string {
 export default function TokenForm({
   models,
   today,
+  rate,
 }: {
   models: Model[];
   today: string;
+  rate: number;
 }) {
   const [state, action, pending] = useActionState(recordTokens, initial);
   const [modelId, setModelId] = useState(models[0]?.id ?? "");
   const [date, setDate] = useState(today);
+  const [preview, setPreview] = useState<string | null>(null);
   const tokensRef = useRef<HTMLInputElement>(null);
   const yesterday = shiftDay(today, -1);
 
@@ -35,22 +44,23 @@ export default function TokenForm({
   useEffect(() => {
     if (state.saved && tokensRef.current) {
       tokensRef.current.value = "";
+      setPreview(null);
       tokensRef.current.focus();
     }
   }, [state.saved]);
 
   if (models.length === 0) {
-    return <p className="text-sm text-muted">No models on the roster yet.</p>;
+    return <p className="text-muted">No creators on the roster yet.</p>;
   }
 
   return (
-    <form action={action} className="space-y-3 rounded-2xl border border-line bg-surface p-3">
+    <form action={action} className="flex flex-col gap-5 rounded-3xl bg-surface p-4">
       <input type="hidden" name="userId" value={modelId} />
       <input type="hidden" name="streamDate" value={date} />
 
       <fieldset>
-        <legend className="text-sm font-medium">Who streamed</legend>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <legend className="font-medium">Who streamed</legend>
+        <div className="mt-3 flex flex-wrap gap-2">
           {models.map((model) => {
             const selected = model.id === modelId;
             return (
@@ -59,17 +69,9 @@ export default function TokenForm({
                 type="button"
                 onClick={() => setModelId(model.id)}
                 aria-pressed={selected}
-                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm ${
-                  selected
-                    ? "border-accent-strong bg-accent-soft font-medium"
-                    : "border-line text-muted"
-                }`}
+                className={`${CHIP} ${selected ? CHIP_ON : CHIP_OFF}`}
               >
-                <span
-                  aria-hidden
-                  className="size-2 rounded-full"
-                  style={{ background: model.color }}
-                />
+                <Avatar name={model.displayName} color={model.color} size="sm" />
                 {model.displayName}
               </button>
             );
@@ -78,8 +80,8 @@ export default function TokenForm({
       </fieldset>
 
       <fieldset>
-        <legend className="text-sm font-medium">Which night</legend>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
+        <legend className="font-medium">Which night</legend>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           {[
             { value: today, label: "Tonight" },
             { value: yesterday, label: "Last night" },
@@ -89,10 +91,8 @@ export default function TokenForm({
               type="button"
               onClick={() => setDate(option.value)}
               aria-pressed={date === option.value}
-              className={`rounded-full border px-3 py-1.5 text-sm ${
-                date === option.value
-                  ? "border-accent-strong bg-accent-soft font-medium"
-                  : "border-line text-muted"
+              className={`rounded-full px-4 py-2 text-base ${
+                date === option.value ? CHIP_ON : CHIP_OFF
               }`}
             >
               {option.label}
@@ -102,14 +102,14 @@ export default function TokenForm({
             type="date"
             aria-label="Another night"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm"
+            onChange={(event) => setDate(event.target.value)}
+            className="rounded-full bg-surface px-3 py-2 text-sm text-muted"
           />
         </div>
       </fieldset>
 
       <label className="block">
-        <span className="text-sm font-medium">Tokens</span>
+        <span className="font-medium">How many tokens</span>
         <input
           ref={tokensRef}
           name="tokens"
@@ -117,36 +117,44 @@ export default function TokenForm({
           inputMode="numeric"
           autoComplete="off"
           placeholder="4820"
-          className="mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-2xl tabular-nums outline-none focus:border-accent"
+          onChange={(event) => {
+            const value = event.target.value.trim();
+            if (!value) return setPreview(null);
+            const parsed = parseTokenAmount(value);
+            setPreview(
+              "error" in parsed
+                ? null
+                : (parsed.tokens * rate).toLocaleString("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                  }),
+            );
+          }}
+          className={`${FIELD} mt-2 py-4 text-3xl tabular-nums`}
         />
+        <span className="mt-2 block text-sm text-muted" aria-live="polite">
+          {preview ? `That's ${preview}` : "Five cents a token"}
+        </span>
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium">Note (optional)</span>
-        <input
-          name="note"
-          autoComplete="off"
-          className="mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-2.5 text-base outline-none focus:border-accent"
-        />
+        <span className="font-medium">Note</span>
+        <input name="note" autoComplete="off" className={`${FIELD} mt-2`} />
       </label>
 
       {state.error ? (
-        <p role="alert" className="text-sm text-accent-strong">
+        <p role="alert" className="text-accent-strong">
           {state.error}
         </p>
       ) : null}
       {state.saved ? (
-        <p role="status" className="text-sm text-live">
+        <p role="status" className="text-live">
           {state.saved}
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-xl bg-accent-strong px-4 py-3 text-base font-medium text-on-accent disabled:opacity-60"
-      >
-        {pending ? "Saving…" : "Log tokens"}
+      <button type="submit" disabled={pending} className={BUTTON}>
+        {pending ? "Saving…" : "Log it"}
       </button>
     </form>
   );

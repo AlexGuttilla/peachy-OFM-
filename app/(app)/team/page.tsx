@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { requireOwner } from "@/lib/auth";
 import { fmt } from "@/lib/time";
+import { Avatar, ScreenTitle, SectionTitle } from "@/components/ui";
 import { createInvite, revokeInvite, setActive } from "./actions";
 import AddPersonForm from "./AddPersonForm";
 import CopyLink from "./CopyLink";
@@ -35,7 +36,7 @@ export default async function TeamPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-semibold tracking-tight">Team</h1>
+      <ScreenTitle>Team</ScreenTitle>
 
       <AddPersonForm />
 
@@ -60,12 +61,10 @@ function Group({
 }) {
   return (
     <section>
-      <h2 className="text-sm font-semibold">
-        {title} <span className="font-normal text-muted">({people.length})</span>
-      </h2>
+      <SectionTitle>{title}</SectionTitle>
 
       {people.length === 0 ? (
-        <p className="mt-2 text-sm text-muted">Nobody here yet.</p>
+        <p className="mt-2 text-muted">Nobody here yet.</p>
       ) : (
         <ul className="mt-2 space-y-2">
           {people.map((person) => {
@@ -77,23 +76,19 @@ function Group({
                 : "no account yet";
 
             return (
-              <li key={person.id} className="rounded-xl border border-line px-3 py-3">
+              <li key={person.id} className="rounded-2xl bg-surface px-3.5 py-3">
                 <div className="flex items-center gap-3">
-                  <span
-                    aria-hidden
-                    className="size-2.5 shrink-0 rounded-full"
-                    style={{ background: person.color }}
-                  />
+                  <Avatar name={person.displayName} color={person.color} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
+                    <p className="truncate font-medium">
                       {person.displayName}
                       {person.active ? null : (
-                        <span className="ml-2 text-xs font-normal text-muted">
+                        <span className="ml-2 text-sm font-normal text-muted">
                           deactivated
                         </span>
                       )}
                     </p>
-                    <p className="truncate text-xs text-muted">{status}</p>
+                    <p className="truncate text-sm text-muted">{status}</p>
                   </div>
 
                   <form action={setActive}>
@@ -105,7 +100,7 @@ function Group({
                     />
                     <button
                       type="submit"
-                      className="shrink-0 text-xs text-muted underline underline-offset-4"
+                      className="shrink-0 text-sm text-muted underline underline-offset-4"
                     >
                       {person.active ? "Deactivate" : "Reactivate"}
                     </button>
@@ -119,7 +114,7 @@ function Group({
                       <input type="hidden" name="inviteId" value={invite.id} />
                       <button
                         type="submit"
-                        className="text-xs text-accent-strong underline underline-offset-4"
+                        className="text-sm text-accent-strong underline underline-offset-4"
                       >
                         Cancel this link
                       </button>
@@ -130,7 +125,7 @@ function Group({
                     <input type="hidden" name="userId" value={person.id} />
                     <button
                       type="submit"
-                      className="rounded-lg border border-line px-3 py-1.5 text-xs font-medium"
+                      className="rounded-full border border-line px-4 py-2 text-sm font-medium"
                     >
                       {person.username ? "Send a new setup link" : "Create setup link"}
                     </button>

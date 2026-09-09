@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import type { DayCell, SessionView, ShiftView } from "@/lib/calendar";
+import { Avatar, BUTTON, BUTTON_QUIET, FIELD } from "@/components/ui";
 import { deleteShift, saveShift, type ShiftFormState } from "./actions";
 
 type Cell = DayCell & { shifts: ShiftView[]; sessions: SessionView[] };
@@ -37,22 +38,22 @@ export default function CalendarBoard({
 
   return (
     <>
-      <div className="mt-4 grid grid-cols-7 gap-px text-center text-xs text-muted">
+      <div className="mt-5 grid grid-cols-7 text-center text-sm text-muted">
         {WEEKDAYS.map((label, i) => (
-          <div key={i} className="pb-1.5">
+          <div key={i} className="pb-2">
             {label}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-line bg-line">
+      <div className="grid grid-cols-7 overflow-hidden rounded-3xl bg-surface">
         {grid.map((cell) => (
           <button
             key={cell.key}
             type="button"
             onClick={() => setOpenDay(cell.key)}
-            className={`flex min-h-16 flex-col items-center gap-1 bg-surface px-1 pb-1.5 pt-1.5 ${
-              cell.inMonth ? "" : "opacity-40"
+            className={`flex min-h-[4.5rem] flex-col items-center gap-1.5 px-1 pb-2 pt-2 ${
+              cell.inMonth ? "" : "opacity-35"
             }`}
           >
             <span
@@ -70,14 +71,14 @@ export default function CalendarBoard({
                 <span
                   aria-hidden
                   title="streamed"
-                  className="size-1.5 rounded-full border-2 border-live"
+                  className="size-2 rounded-full border-2 border-live"
                 />
               ) : null}
               {cell.shifts.slice(0, 4).map((shift) => (
                 <span
                   key={shift.id}
                   aria-hidden
-                  className="size-1.5 rounded-full"
+                  className="size-2 rounded-full"
                   style={{
                     background: shift.color,
                     // A shift running into this day from yesterday reads as
@@ -139,32 +140,30 @@ function DaySheet({
         className="absolute inset-0 bg-black/30"
       />
 
-      <div className="pb-safe relative max-h-[85vh] overflow-y-auto rounded-t-2xl border-t border-line bg-surface px-4 pt-4">
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line" />
+      <div className="pb-safe relative max-h-[85vh] overflow-y-auto rounded-t-3xl bg-surface px-4 pt-3">
+        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line" />
 
-        <h2 className="text-base font-semibold">{longDate(cell.key)}</h2>
+        <h2 className="text-xl font-semibold tracking-tight">{longDate(cell.key)}</h2>
 
-        <h3 className="mt-3 text-xs font-medium text-muted">Scheduled</h3>
+        <h3 className="mt-5 text-sm font-medium text-muted">Scheduled</h3>
 
         {cell.shifts.length === 0 ? (
-          <p className="mt-1.5 text-sm text-muted">Nothing scheduled yet.</p>
+          <p className="mt-2 text-muted">Nothing scheduled yet.</p>
         ) : (
-          <ul className="mt-1.5 space-y-2">
+          <ul className="mt-2 space-y-2">
             {cell.shifts.map((shift) => {
               const continuation = shift.endDay === cell.key && shift.crossesMidnight;
               return (
                 <li
                   key={shift.id}
-                  className="flex items-center gap-3 rounded-xl border border-line px-3 py-2.5"
+                  className="flex items-center gap-3 rounded-2xl bg-bg px-3.5 py-3"
                 >
-                  <span
-                    aria-hidden
-                    className="size-2.5 shrink-0 rounded-full"
-                    style={{ background: shift.color, opacity: continuation ? 0.4 : 1 }}
-                  />
+                  <span style={{ opacity: continuation ? 0.45 : 1 }}>
+                    <Avatar name={shift.displayName} color={shift.color} />
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{shift.displayName}</p>
-                    <p className="text-xs text-muted">
+                    <p className="truncate font-medium">{shift.displayName}</p>
+                    <p className="text-sm text-muted">
                       {continuation
                         ? `runs until ${shift.endLabel}, started ${shift.startLabel} yesterday`
                         : `${shift.startLabel} – ${shift.endLabel}${
@@ -201,40 +200,32 @@ function DaySheet({
         )}
 
         {cell.sessions.length > 0 ? (
-          <div className="mt-4">
-            <h3 className="text-xs font-medium text-muted">Actually streamed</h3>
-            <ul className="mt-1.5 space-y-2">
+          <div className="mt-5">
+            <h3 className="text-sm font-medium text-muted">Actually streamed</h3>
+            <ul className="mt-2 space-y-2">
               {cell.sessions.map((session) => {
                 const continuation =
                   session.endDay === cell.key && session.crossesMidnight;
                 return (
                   <li
                     key={session.id}
-                    className="flex items-center gap-3 rounded-xl border border-live-line bg-live-soft px-3 py-2.5"
+                    className="flex items-center gap-3 rounded-2xl bg-live-soft px-3.5 py-3"
                   >
-                    <span
-                      aria-hidden
-                      className="size-2.5 shrink-0 rounded-full"
-                      style={{ background: session.color }}
-                    />
+                    <Avatar name={session.displayName} color={session.color} />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
+                      <p className="truncate font-medium">
                         {session.displayName}
                         {session.open ? (
-                          <span className="ml-2 text-xs font-normal text-live">
-                            ● still on
+                          <span className="ml-2 text-sm font-normal text-live">
+                            still on
                           </span>
                         ) : null}
                       </p>
-                      <p className="text-xs text-muted">
-                        {continuation
-                          ? `ran until ${session.endLabel ?? "now"}, from ${session.startLabel} yesterday`
-                          : `${session.startLabel} – ${session.endLabel ?? "now"}${
-                              session.crossesMidnight ? " next day" : ""
-                            }`}
+                      <p className="text-sm text-muted">
+                        {sessionDetail(session, continuation)}
                       </p>
                     </div>
-                    <span className="shrink-0 text-sm font-medium tabular-nums">
+                    <span className="shrink-0 font-semibold tabular-nums">
                       {session.lengthLabel}
                     </span>
                   </li>
@@ -260,7 +251,7 @@ function DaySheet({
           <button
             type="button"
             onClick={() => setAdding(true)}
-            className="mt-4 w-full rounded-xl bg-accent-strong px-4 py-3 text-sm font-medium text-on-accent"
+            className={`mt-5 ${BUTTON}`}
           >
             {viewer.role === "OWNER" ? "Add hours" : "Add my hours"}
           </button>
@@ -269,7 +260,7 @@ function DaySheet({
         <button
           type="button"
           onClick={onClose}
-          className="mt-2 mb-2 w-full rounded-xl border border-line px-4 py-3 text-sm"
+          className={`mt-2 mb-3 ${BUTTON_QUIET}`}
         >
           Close
         </button>
@@ -298,17 +289,17 @@ function ShiftForm({
   }, [state.ok, onDone]);
 
   return (
-    <form action={action} className="mt-4 space-y-3 rounded-xl border border-line p-3">
+    <form action={action} className="mt-5 space-y-4 rounded-2xl bg-bg p-4">
       <input type="hidden" name="date" value={date} />
       {shift ? <input type="hidden" name="shiftId" value={shift.id} /> : null}
 
       {viewer.role === "OWNER" ? (
-        <label className="block text-sm">
+        <label className="block">
           <span className="font-medium">Who</span>
           <select
             name="userId"
             defaultValue={shift?.userId ?? roster[0]?.id}
-            className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base"
+            className={`${FIELD} mt-2`}
           >
             {roster.map((person) => (
               <option key={person.id} value={person.id}>
@@ -322,38 +313,38 @@ function ShiftForm({
       )}
 
       <div className="grid grid-cols-2 gap-3">
-        <label className="block text-sm">
+        <label className="block">
           <span className="font-medium">Start</span>
           <input
             type="time"
             name="start"
             required
             defaultValue={shift ? to24h(shift.startLabel) : "21:00"}
-            className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base"
+            className={`${FIELD} mt-2`}
           />
         </label>
-        <label className="block text-sm">
+        <label className="block">
           <span className="font-medium">End</span>
           <input
             type="time"
             name="end"
             required
             defaultValue={shift ? to24h(shift.endLabel) : "02:00"}
-            className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base"
+            className={`${FIELD} mt-2`}
           />
         </label>
       </div>
 
-      <p className="text-xs text-muted">
+      <p className="text-sm text-muted">
         An end time earlier than the start rolls over to the next day.
       </p>
 
-      <label className="block text-sm">
-        <span className="font-medium">Note (optional)</span>
+      <label className="block">
+        <span className="font-medium">Note</span>
         <input
           name="note"
           defaultValue={shift?.note ?? ""}
-          className="mt-1.5 w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base"
+          className={`${FIELD} mt-2`}
         />
       </label>
 
@@ -381,6 +372,24 @@ function ShiftForm({
       </div>
     </form>
   );
+}
+
+/**
+ * How a worked stretch reads on a given day. A session still running has no
+ * end time, so it is described by when it started — never "now next day".
+ */
+function sessionDetail(session: SessionView, continuation: boolean): string {
+  if (session.open) {
+    return continuation
+      ? `on since ${session.startLabel} yesterday`
+      : `on since ${session.startLabel}`;
+  }
+  if (continuation) {
+    return `ran until ${session.endLabel}, from ${session.startLabel} yesterday`;
+  }
+  return `${session.startLabel} – ${session.endLabel}${
+    session.crossesMidnight ? " next day" : ""
+  }`;
 }
 
 /** "9:30 PM" -> "21:30", for prefilling a native time input. */
